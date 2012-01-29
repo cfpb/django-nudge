@@ -10,7 +10,6 @@ from reversion.models import Version
 
 """
 nudgeinit
-Updated 1/28/2012, Joshua Ruihley
 
 Initializes django-nudge by getting latest versions of all objects in reversion
 and marking them as pushed.
