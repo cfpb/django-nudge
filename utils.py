@@ -1,3 +1,6 @@
+from django.db.models import Q
+
+from nudge.models import Batch, BatchItem
 from reversion.models import Version
 
 def latest_objects():
@@ -12,3 +15,25 @@ def latest_objects():
         latest.append(latest_obj[0])
 
     return latest
+    
+def object_not_pushed(obj):
+    """
+    takes a Version object and returns True if object is associated with a batch that has been pushed
+    """
+    batch_items = BatchItem.objects.filter(version=obj).filter(batch__pushed__isnull=False)
+    return not batch_items
+    
+def changed_items():
+    """
+    return list of objects that are new or changed and not pushed
+    """
+    
+    latest = latest_objects()
+    eligible = []
+    for obj in latest:
+        if object_not_pushed(obj):
+            eligible.append(obj)
+    
+    return eligible
+        
+        
