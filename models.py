@@ -11,6 +11,10 @@ class Batch(models.Model):
     title = models.TextField(max_length=255)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    pushed = models.DateTimeField(null=True, blank=True)
+    
+    def __unicode__(self):
+        return u'%s' % self.title
     
     class Meta:
         verbose_name_plural = "batches"
@@ -19,7 +23,6 @@ class BatchItem(models.Model):
     object_id = models.IntegerField()
     version = models.ForeignKey(Version)
     batch = models.ForeignKey(Batch)
-    push_timestamp = models.DateTimeField(null=True)
     
     def __unicode__(self):
-        return self.version.object_repr
+        return u'%s' % self.version.object_repr
