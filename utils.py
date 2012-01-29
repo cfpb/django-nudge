@@ -1,5 +1,3 @@
-from django.db.models import Q
-
 from nudge.models import Batch, BatchItem
 from reversion.models import Version
 
