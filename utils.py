@@ -33,5 +33,9 @@ def changed_items():
             eligible.append(obj)
     
     return eligible
-        
-        
+    
+def collect_eligibles(batch):
+    eligibles = changed_items()
+    for e in eligibles:
+        e.batch = batch
+        e.save()

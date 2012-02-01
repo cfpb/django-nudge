@@ -21,4 +21,10 @@ class Command(NoArgsCommand):
         return list of objects that are new or changed and not pushed
         """
         
-        print changed_items()
+        print "\n"
+        print "Changed items that are eligible to be added to a batch"
+        print "-----"
+        eligible = changed_items()
+        for e in eligible:
+            print e
+        print "\n"
