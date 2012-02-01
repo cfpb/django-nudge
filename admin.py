@@ -34,7 +34,7 @@ class BatchAdmin(admin.ModelAdmin):
         
     def save_model(self, request, obj, form, change):
         obj.save()
-        versions_delete_str=request.POST.get('remove_change_from_batch')
+        versions_delete_str=request.POST.getlist('remove_change_from_batch')
         if versions_delete_str:
             versions_to_delete=[Version.objects.get(pk=vid) for vid in [int(vs) for vs in versions_delete_str]]
             for version in versions_to_delete:
@@ -42,7 +42,7 @@ class BatchAdmin(admin.ModelAdmin):
         
         
         
-        versions_str=request.POST.get('changes_in_batch')
+        versions_str=request.POST.getlist('changes_in_batch')
         if versions_str:
             versions=[Version.objects.get(pk=vid) for vid in [int(vs) for vs in versions_str]]
             add_versions_to_batch(obj, versions)
