@@ -19,7 +19,7 @@ def serialize_batch(batch):
     return b
     
 def send_command(target, data):
-    url = "%s/%s/" % (SETTINGS.remote_address, target)
+    url = "%s/nudge-api/%s/" % (SETTINGS.remote_address, target)
     req = urllib2.Request(url, data)
     response = urllib2.urlopen(req)
     return response.read()
