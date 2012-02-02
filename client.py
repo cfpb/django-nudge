@@ -14,7 +14,11 @@ commands to send to nudge server
 SETTINGS = Setting.objects.get(pk=1)
 
 def serialize_batch(batch):
-    batch_items = serializers.serialize("json", BatchItem.objects.filter(batch=batch))
+    items = BatchItem.objects.filter(batch=batch)
+    versions = []
+    for item in items:
+        versions.append(item.version)
+    batch_items = serializers.serialize("json", versions)
     b = urllib.urlencode({ 'id':batch.id, 'title':batch.title, 'items':batch_items })
     return b
     
