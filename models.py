@@ -18,6 +18,14 @@ class Batch(models.Model):
     
     class Meta:
         verbose_name_plural = "batches"
+        
+        
+class PushHistoryItem(models.Model):
+    batch=models.ForeignKey(Batch)
+    created=models.DateTimeField(auto_now_add=True)
+    http_result=models.IntegerField(blank=True, null=True)
+    
+        
       
 class BatchItem(models.Model):
     object_id = models.IntegerField()

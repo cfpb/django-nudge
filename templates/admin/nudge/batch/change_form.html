@@ -83,7 +83,11 @@
 </ul>
 {% endif %}
 {% submit_batch_row %}
+{% for history_item in history %}
 
+{{ history.item }}
+
+{% endfor %}
 
 {% if adminform and add %}
    <script type="text/javascript">document.getElementById("{{ adminform.first_field.id_for_label }}").focus();</script>
