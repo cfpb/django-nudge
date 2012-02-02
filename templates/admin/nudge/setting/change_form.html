@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n admin_modify adminmedia %}
+{% load i18n admin_modify adminmedia nudge_admin_helpers %}
 {% load url from future %}
 
 {% block extrahead %}{{ block.super }}
@@ -56,8 +56,8 @@
 {% endfor %}
 
 {% block after_related_objects %}{% endblock %}
-
-{% submit_row %}
+ <div class="submit-row" {% if is_popup %}style="overflow: auto;"{% endif %}>
+<input type="submit" value="{% trans 'Save' %}" class="default" name="_save" {{ onclick_attrib }}/></div>
 
 {% if adminform and add %}
    <script type="text/javascript">document.getElementById("{{ adminform.first_field.id_for_label }}").focus();</script>

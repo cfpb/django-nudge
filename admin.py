@@ -25,13 +25,14 @@ class SettingsAdmin(admin.ModelAdmin):
          
     def changelist_view(self,*args, **kwargs):
         SETTINGS, created = Setting.objects.get_or_create(pk=1)
-        #import pdb;pdb.set_trace()
-        #return super(SettingsAdmin, self).changelist_view(*args, **kwargs)
         return HttpResponseRedirect(args[0].environ['PATH_INFO']+str(SETTINGS.id))
         
-
-    
-    
+    def add_view(self,*args, **kwargs):
+        SETTINGS, created = Setting.objects.get_or_create(pk=1)
+        return HttpResponseRedirect(args[0].environ['PATH_INFO']+"../"+str(SETTINGS.id))
+        
+    def response_change(self,*args, **kwargs):
+        return HttpResponseRedirect('../../')
 
 
 class BatchAdmin(admin.ModelAdmin):
