@@ -33,7 +33,19 @@ def changed_items():
             eligible.append(obj)
     
     return eligible
+
+def add_versions_to_batch(batch, versions):
+    """
+    takes a list of Version obects, and adds them to the given Batch
+    """
+    for v in versions:
+        item = BatchItem(object_id=v.object_id, version=v, batch=batch)
+        item.save()
+
     
+    
+    
+
 def collect_eligibles(batch):
     eligibles = changed_items()
     for e in eligibles:
