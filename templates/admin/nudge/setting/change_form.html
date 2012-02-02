@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n admin_modify adminmedia nudge_admin_helpers%}
+{% load i18n admin_modify adminmedia %}
 {% load url from future %}
 
 {% block extrahead %}{{ block.super }}
@@ -57,33 +57,7 @@
 
 {% block after_related_objects %}{% endblock %}
 
-
-{% if versions_selected %}
-<h2>Changes attached to this batch</h2>
-<table>
-	<tr><td>version</td><td>Delete?</td></tr>
-{% for version in versions_selected %}
-<tr> <td>[{{version.content_type.name}}] {{version.object}}</td><td> <input type="checkbox" name="remove_change_from_batch" value="{{version.id}}" /> </td> </li>
-
-
-{% endfor %}
-</table>
-{% endif %}
-
-
-{% if available_changes %}
-<h2> Available Changes</h2><ul>
-{% for version in available_changes %}
-
-<li><input type="checkbox" name="changes_in_batch" value="{{version.id}}" /> [{{version.content_type.name}}] {{version.object}}</li>
-
-
-
-{% endfor %}
-</ul>
-{% endif %}
-{% submit_batch_row %}
-
+{% submit_row %}
 
 {% if adminform and add %}
    <script type="text/javascript">document.getElementById("{{ adminform.first_field.id_for_label }}").focus();</script>

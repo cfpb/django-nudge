@@ -8,9 +8,29 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from utils import changed_items, add_versions_to_batch
 
 
+
+
+
 class NudgeAdmin(VersionAdmin):
     pass
 
+    
+
+
+class SettingsAdmin(admin.ModelAdmin):
+    def render_change_form(self,*args, **kwargs):
+         
+         
+         return super(SettingsAdmin, self).render_change_form(*args, **kwargs)
+         
+    def changelist_view(self,*args, **kwargs):
+        SETTINGS, created = Setting.objects.get_or_create(pk=1)
+        #import pdb;pdb.set_trace()
+        #return super(SettingsAdmin, self).changelist_view(*args, **kwargs)
+        return HttpResponseRedirect(args[0].environ['PATH_INFO']+str(SETTINGS.id))
+        
+
+    
     
 
 
@@ -48,12 +68,14 @@ class BatchAdmin(admin.ModelAdmin):
             add_versions_to_batch(obj, versions)
             
             
+        if request.POST.get(u'_save_and_push'):
+            from client import push_batch
+            push_batch(obj)
             
-        #import pdb;pdb.set_trace() 
 
 
 
 
-admin.site.register(Setting)
+admin.site.register(Setting, SettingsAdmin)
 admin.site.register(Batch, BatchAdmin)
 admin.site.register(BatchItem)
