@@ -1,1 +1,1 @@
-Nudge will be a Django application that allows content managers to selectively push content from dev to production.
+Nudge will be a Django application that allows content managers to push only records that have changed from dev to production.
