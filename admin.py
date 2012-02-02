@@ -44,7 +44,10 @@ class BatchAdmin(admin.ModelAdmin):
         attached_versions=[]
         if batch:
             attached_versions=[b.version for b in batch.batchitem_set.all()]
-            context.update({'versions_selected': attached_versions})
+            context.update({'versions_selected': attached_versions,
+                            'history': batch.pushhistoryitem_set.all()
+            })
+            
         
         
         if not batch or not batch.pushed:

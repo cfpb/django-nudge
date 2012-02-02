@@ -23,7 +23,7 @@ class Batch(models.Model):
 class PushHistoryItem(models.Model):
     batch=models.ForeignKey(Batch)
     created=models.DateTimeField(auto_now_add=True)
-    http_result=models.IntegerField(blank=True)
+    http_result=models.IntegerField(blank=True, null=True)
     
         
       
