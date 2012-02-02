@@ -17,6 +17,7 @@ def serialize_batch(batch):
         versions.append(item.version)
     batch_items = serializers.serialize("json", versions)
     b = urllib.urlencode({ 'id':batch.id, 'title':batch.title, 'items':batch_items })
+    print b
     return b
     
 def send_command(target, data):
