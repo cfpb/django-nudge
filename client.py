@@ -16,6 +16,7 @@ SETTINGS = Setting.objects.get(pk=1)
 def serialize_batch(batch):
     batch_items = serializers.serialize("json", BatchItem.objects.filter(batch=batch))
     b = urllib.urlencode({ 'id':batch.id, 'title':batch.title, 'items':batch_items })
+    print b
     return b
     
 def send_command(target, data):
