@@ -8,7 +8,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from utils import changed_items, add_versions_to_batch
 
 
-
+from nudge.exceptions import *
 
 
 class NudgeAdmin(VersionAdmin):
@@ -74,7 +74,10 @@ class BatchAdmin(admin.ModelAdmin):
             
         if request.POST.get(u'_save_and_push'):
             from client import push_batch
-            push_batch(obj)
+            if obj.is_valid():
+                push_batch(obj)
+            else:
+                raise BatchValidationError(obj)
             
 
 
