@@ -5,5 +5,6 @@ from server import process_batch
 
 @csrf_exempt
 def batch(request):
-    result = process_batch(request.POST)
+    batch = request.POST['batch']
+    result = process_batch(batch)
     return HttpResponse(result)

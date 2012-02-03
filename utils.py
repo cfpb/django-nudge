@@ -51,3 +51,11 @@ def collect_eligibles(batch):
     for e in eligibles:
         e.batch = batch
         e.save()
+        
+
+def convert_keys_to_string(dictionary):
+    """Recursively converts dictionary keys to strings. Found at http://stackoverflow.com/a/7027514/104365 """
+    if not isinstance(dictionary, dict):
+        return dictionary
+    return dict((str(k), convert_keys_to_string(v)) 
+        for k, v in dictionary.items())

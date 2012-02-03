@@ -2,6 +2,8 @@ import json
 
 from django.db import models
 from django.utils import importlib
+from utils import convert_keys_to_string
+
 
 def get_model(model_str):
     app_name = model_str.split('.')[0]
@@ -16,15 +18,17 @@ def valid_batch(batch_info):
     
 def process_item(item):
     if item['fields']['type'] < 2:
+        # Add or Update
         item_content = json.loads(item['fields']['serialized_data'])[0]
         model_obj = get_model(item_content['model'])
         id = item_content['pk']
-        fields = item_content['fields']
+        fields = convert_keys_to_string(item_content['fields'])
+        
         new_item = model_obj(pk=id, **fields)
         new_item.save()
         return True
     else:
-        print "delete item"
+        # Delete
         return False
     
 def process_batch(batch_info):
@@ -33,4 +37,5 @@ def process_batch(batch_info):
         success = True
         for item in items:
             success = success and process_item(item)
+        
     return success
