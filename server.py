@@ -18,6 +18,7 @@ def valid_batch(batch_info):
     
 def process_item(item):
     if item['fields']['type'] < 2:
+        # Add or Update
         item_content = json.loads(item['fields']['serialized_data'])[0]
         model_obj = get_model(item_content['model'])
         id = item_content['pk']
@@ -27,7 +28,7 @@ def process_item(item):
         new_item.save()
         return True
     else:
-        print "delete item"
+        # Delete
         return False
     
 def process_batch(batch_info):
