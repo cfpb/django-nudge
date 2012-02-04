@@ -1,4 +1,4 @@
-import json, pickle, urllib, urllib2
+import json, os, pickle, urllib, urllib2
 
 from Crypto.Cipher import AES
 
