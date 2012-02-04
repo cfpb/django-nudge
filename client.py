@@ -1,4 +1,5 @@
 import json
+import pickle
 import urllib, urllib2
 from Crypto.Cipher import AES
 
@@ -26,10 +27,9 @@ def serialize_batch(batch):
     for item in items:
         versions.append(item.version)
     batch_items = serializers.serialize("json", versions)
-    b_plaintext = urllib.urlencode({ 'id':batch.id, 'title':batch.title, 'items':batch_items })
+    b_plaintext = pickle.dumps({ 'id':batch.id, 'title':batch.title, 'items':batch_items })
     b_ciphertext = encrypt_batch(b_plaintext)
-    
-    return { 'batch': b_ciphertext }
+    return urllib.urlencode({ 'batch': b_ciphertext })
     
 def send_command(target, data):
     url = "%s/nudge-api/%s/" % (SETTINGS.remote_address, target)
