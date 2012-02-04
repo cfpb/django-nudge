@@ -1,6 +1,5 @@
-import json
-import pickle
-import urllib, urllib2
+import json, pickle, urllib, urllib2
+
 from Crypto.Cipher import AES
 
 from django.core import serializers

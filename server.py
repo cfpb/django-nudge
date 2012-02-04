@@ -1,6 +1,4 @@
-import binascii
-import pickle
-import json
+import binascii, json, os, pickle
 
 from Crypto.Cipher import AES
 
