@@ -1,5 +1,7 @@
 from django.db import models
 from reversion.models import Version
+
+from exceptions import *
     
 class Setting(models.Model):
     local_address = models.CharField(max_length=255, null=True, blank=True)
@@ -16,8 +18,25 @@ class Batch(models.Model):
     def __unicode__(self):
         return u'%s' % self.title
     
+    def is_valid(self, test_only=True):
+        for batchitem in self.batchitem_set.all():
+             valid=True
+             other_batches=batchitem.version.batchitem_set.exclude(batch=self)
+             if other_batches.count() > 0: 
+                 if test_only:
+                     valid=False
+                 else:
+                     raise BatchValidationError
+                
+
+             return valid
+                 
+    
+    
     class Meta:
         verbose_name_plural = "batches"
+        
+    
         
         
 class PushHistoryItem(models.Model):
