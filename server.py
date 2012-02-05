@@ -29,7 +29,8 @@ def valid_batch(batch_info):
     
 def decrypt(key, ciphertext):
     ciphertext = binascii.unhexlify(ciphertext)
-    decobj = AES.new(key, AES.MODE_ECB)
+    iv = str(SETTINGS.local_address.encode('hex'))[:16]
+    decobj = AES.new(key, AES.MODE_CBC, iv)
     plaintext = decobj.decrypt(ciphertext)
     return plaintext
     
