@@ -1,4 +1,4 @@
-import binascii, json, md5, os, pickle
+import binascii, hashlib, json, os, pickle
 
 from Crypto.Cipher import AES
 
@@ -32,8 +32,7 @@ def valid_batch(batch_info):
 def decrypt(key, ciphertext):
     """decrypts message sent from client using shared symmetric key"""
     ciphertext = binascii.unhexlify(ciphertext)
-    m = md5.new()
-    m.update(SETTINGS.local_address)
+    m = hashlib.md5(SETTINGS.local_address)
     iv = m.digest()
     decobj = AES.new(key, AES.MODE_CBC, iv)
     plaintext = decobj.decrypt(ciphertext)
@@ -44,19 +43,22 @@ def process_item(item):
     examines an item in a batch, determines if it should be added, updated or
     deleted and performs the command
     """
+    
+    item_content = json.loads(item['fields']['serialized_data'])[0]
+    model_obj = get_model(item_content['model'])
+    id = item_content['pk']
+    fields = convert_keys_to_string(item_content['fields'])
+    
     if item['fields']['type'] < 2:
         # Add or Update
-        item_content = json.loads(item['fields']['serialized_data'])[0]
-        model_obj = get_model(item_content['model'])
-        id = item_content['pk']
-        fields = convert_keys_to_string(item_content['fields'])
-        
         new_item = model_obj(pk=id, **fields)
         new_item.save()
         return True
     else:
         # Delete
-        return False
+        del_item = model_obj.objects.get(pk=id)
+        del_item.delete()
+        return True
     
 def process_batch(batch_info):
     """
