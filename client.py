@@ -16,7 +16,8 @@ SETTINGS = Setting.objects.get(pk=1)
 
 def encrypt_batch(b_plaintext):
     key = SETTINGS.remote_key
-    encobj = AES.new(key, AES.MODE_ECB)
+    iv = str(SETTINGS.remote_address.encode('hex'))[:16]
+    encobj = AES.new(key, AES.MODE_CBC, iv)
     pad = lambda s: s + (16 - len(s) % 16) * ' '
     return encobj.encrypt(pad(b_plaintext)).encode('hex')
 
