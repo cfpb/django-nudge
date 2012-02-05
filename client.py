@@ -1,4 +1,4 @@
-import json, os, pickle, urllib, urllib2
+import json, md5, os, pickle, urllib, urllib2
 
 from Crypto.Cipher import AES
 
@@ -16,7 +16,9 @@ SETTINGS = Setting.objects.get(pk=1)
 
 def encrypt_batch(b_plaintext):
     key = SETTINGS.remote_key
-    iv = str(SETTINGS.remote_address.encode('hex'))[:16]
+    m = md5.new()
+    m.update(SETTINGS.remote_address)
+    iv = m.digest()
     encobj = AES.new(key, AES.MODE_CBC, iv)
     pad = lambda s: s + (16 - len(s) % 16) * ' '
     return encobj.encrypt(pad(b_plaintext)).encode('hex')
