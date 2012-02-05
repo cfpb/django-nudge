@@ -15,6 +15,7 @@ commands to send to nudge server
 SETTINGS = Setting.objects.get(pk=1)
 
 def encrypt_batch(b_plaintext):
+    """encrypts a pickled batch for sending to server"""
     key = SETTINGS.remote_key
     m = md5.new()
     m.update(SETTINGS.remote_address)
@@ -24,6 +25,10 @@ def encrypt_batch(b_plaintext):
     return encobj.encrypt(pad(b_plaintext)).encode('hex')
 
 def serialize_batch(batch):
+    """
+    returns urlecncoded pickled serialization of a batch ready to be sent to 
+    server.
+    """
     items = BatchItem.objects.filter(batch=batch)
     versions = []
     for item in items:
@@ -34,6 +39,9 @@ def serialize_batch(batch):
     return urllib.urlencode({ 'batch': b_ciphertext })
     
 def send_command(target, data):
+    """
+    sends a nudge api command
+    """
     url = "%s/nudge-api/%s/" % (SETTINGS.remote_address, target)
     req = urllib2.Request(url, data)
     response = urllib2.urlopen(req)
@@ -41,7 +49,7 @@ def send_command(target, data):
 
 def push_batch(batch):
     """
-    create commands for each item in batch and send them
+    pushes batch to server and logs push
     """
     log=PushHistoryItem(batch=batch)
     log.save()
