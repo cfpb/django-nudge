@@ -1,4 +1,4 @@
-import hashlib, json, os, pickle, urllib, urllib2
+import datetime, hashlib, json, os, pickle, urllib, urllib2
 
 from Crypto.Cipher import AES
 
@@ -48,8 +48,10 @@ def send_command(target, data):
 
 def push_batch(batch):
     """
-    pushes batch to server and logs push
+    pushes batch to server, logs push and timestamps on success
     """
     log=PushHistoryItem(batch=batch)
     log.save()
-    return send_command('batch', serialize_batch(batch))
+    if send_command('batch', serialize_batch(batch)):
+        batch.pushed = datetime.datetime.now()
+        batch.save()
