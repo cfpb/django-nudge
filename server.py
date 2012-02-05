@@ -1,4 +1,4 @@
-import binascii, json, os, pickle
+import binascii, json, md5, os, pickle
 
 from Crypto.Cipher import AES
 
@@ -29,7 +29,9 @@ def valid_batch(batch_info):
     
 def decrypt(key, ciphertext):
     ciphertext = binascii.unhexlify(ciphertext)
-    iv = str(SETTINGS.local_address.encode('hex'))[:16]
+    m = md5.new()
+    m.update(SETTINGS.local_address)
+    iv = m.digest()
     decobj = AES.new(key, AES.MODE_CBC, iv)
     plaintext = decobj.decrypt(ciphertext)
     return plaintext
