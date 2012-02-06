@@ -16,7 +16,7 @@ SETTINGS = Setting.objects.get(pk=1)
 
 def encrypt_batch(b_plaintext):
     """encrypts a pickled batch for sending to server"""
-    key = SETTINGS.remote_key
+    key = SETTINGS.remote_key.decode('hex')
     m = hashlib.md5(SETTINGS.remote_address)
     iv = m.digest()
     encobj = AES.new(key, AES.MODE_CBC, iv)
