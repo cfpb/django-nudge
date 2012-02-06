@@ -64,7 +64,7 @@ def process_batch(batch_info):
     """
     loops through items in a batch and processes them
     """
-    key = SETTINGS.local_key
+    key = SETTINGS.local_key.decode('hex')
     batch_info = pickle.loads(decrypt(key, batch_info))
     if valid_batch(batch_info):
         items = json.loads(batch_info['items'])
