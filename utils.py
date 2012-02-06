@@ -1,3 +1,5 @@
+import hashlib, os
+
 from nudge.models import Batch, BatchItem
 from reversion.models import Version
 
@@ -47,3 +49,9 @@ def convert_keys_to_string(dictionary):
         return dictionary
     return dict((str(k), convert_keys_to_string(v)) 
         for k, v in dictionary.items())
+        
+def generate_key():
+    """Generate 32 byte key and return hex representation"""
+    seed = os.urandom(32)
+    key = hashlib.sha256(seed).digest().encode('hex')
+    return key 
