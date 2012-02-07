@@ -36,8 +36,9 @@ class Batch(models.Model):
     
     class Meta:
         verbose_name_plural = "batches"
-        
-    
+        permissions = (
+        	("push_batch", "Can push batches"),
+    	)
         
         
 class PushHistoryItem(models.Model):
