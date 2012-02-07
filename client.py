@@ -17,11 +17,11 @@ SETTINGS = Setting.objects.get(pk=1)
 def encrypt_batch(b_plaintext):
     """encrypts a pickled batch for sending to server"""
     key = SETTINGS.remote_key.decode('hex')
-    m = hashlib.md5(SETTINGS.remote_address)
+    m = hashlib.md5(os.urandom(16))
     iv = m.digest()
     encobj = AES.new(key, AES.MODE_CBC, iv)
     pad = lambda s: s + (16 - len(s) % 16) * ' '
-    return encobj.encrypt(pad(b_plaintext)).encode('hex')
+    return { 'batch': encobj.encrypt(pad(b_plaintext)).encode('hex'), 'iv':iv.encode('hex') }
 
 def serialize_batch(batch):
     """
@@ -34,8 +34,7 @@ def serialize_batch(batch):
         versions.append(item.version)
     batch_items = serializers.serialize("json", versions)
     b_plaintext = pickle.dumps({ 'id':batch.id, 'title':batch.title, 'items':batch_items })
-    b_ciphertext = encrypt_batch(b_plaintext)
-    return urllib.urlencode({ 'batch': b_ciphertext })
+    return urllib.urlencode(encrypt_batch(b_plaintext))
     
 def send_command(target, data):
     """
