@@ -5,7 +5,7 @@ class BaseNudgeException(Exception):
     pass
     
 class BatchValidationError(BaseNudgeException):
-    "This batch constains an error"
+    "This batch contains an error"
     
     def __init__(self,batch):
         self.batch=batch
