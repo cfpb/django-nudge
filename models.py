@@ -31,8 +31,6 @@ class Batch(models.Model):
 
              return valid
              
-    def delete(self):
-    	return False
                  
     
     
@@ -43,9 +41,11 @@ class Batch(models.Model):
         
         
 class PushHistoryItem(models.Model):
-    batch=models.ForeignKey(Batch)
+    batch=models.ForeignKey(Batch, on_delete=models.PROTECT)
     created=models.DateTimeField(auto_now_add=True)
     http_result=models.IntegerField(blank=True, null=True)
+    
+
     
         
       
