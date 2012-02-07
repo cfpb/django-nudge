@@ -29,11 +29,9 @@ def valid_batch(batch_info):
     is_valid = ('id' in batch_info) and ('title' in batch_info) and ('items' in batch_info)
     return is_valid
     
-def decrypt(key, ciphertext):
+def decrypt(key, ciphertext, iv):
     """decrypts message sent from client using shared symmetric key"""
     ciphertext = binascii.unhexlify(ciphertext)
-    m = hashlib.md5(SETTINGS.local_address)
-    iv = m.digest()
     decobj = AES.new(key, AES.MODE_CBC, iv)
     plaintext = decobj.decrypt(ciphertext)
     return plaintext
@@ -60,12 +58,15 @@ def process_item(item):
         del_item.delete()
         return True
     
-def process_batch(batch_info):
+def process_batch(batch_info, iv):
     """
     loops through items in a batch and processes them
     """
+    print batch_info
+    print iv
+    print iv.decode('hex')
     key = SETTINGS.local_key.decode('hex')
-    batch_info = pickle.loads(decrypt(key, batch_info))
+    batch_info = pickle.loads(decrypt(key, batch_info, iv.decode('hex')))
     if valid_batch(batch_info):
         items = json.loads(batch_info['items'])
         success = True
