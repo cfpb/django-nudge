@@ -30,6 +30,9 @@ class Batch(models.Model):
                 
 
              return valid
+             
+    def delete(self):
+    	return False
                  
     
     
