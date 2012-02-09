@@ -50,9 +50,10 @@ class BatchAdmin(admin.ModelAdmin):
             attached_versions=[b.version for b in batch.batchitem_set.all()]
             context.update({'versions_selected': attached_versions,
                             'history': batch.pushhistoryitem_set.all(),
+                            'editable': not bool(batch.pushed),
+                            'object': batch
             })
             
-        
         
         if not batch or not batch.pushed:
             available_changes=[item for item in changed_items() if item not in attached_versions]
@@ -79,6 +80,7 @@ class BatchAdmin(admin.ModelAdmin):
         if request.POST.get(u'_save_and_push'):
             from client import push_batch
             if obj.is_valid():
+                obj.save()
                 push_batch(obj)
             else:
                 raise BatchValidationError(obj)

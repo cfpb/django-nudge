@@ -34,6 +34,9 @@
   </ul>
 {% endif %}{% endif %}
 {% endblock %}
+
+{% if editable %}
+
 <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.module_name }}_form">{% csrf_token %}{% block form_top %}{% endblock %}
 <div>
 {% if is_popup %}<input type="hidden" name="_popup" value="1" />{% endif %}
@@ -63,7 +66,7 @@
 <table>
 	<tr><td>version</td><td>Delete?</td></tr>
 {% for version in versions_selected %}
-<tr> <td>[{{version.content_type.name}}] {{version.object}}</td><td> <input type="checkbox" name="remove_change_from_batch" value="{{version.id}}" /> </td> </li>
+<tr> <td>[{{version.content_type.name}}] {{version.object_repr}}</td><td> <input type="checkbox" name="remove_change_from_batch" value="{{version.id}}" /> </td> </li>
 
 
 {% endfor %}
@@ -98,4 +101,9 @@
 
 </div>
 </form></div>
+{% else %}
+{% include "admin/nudge/batch/read_only.html" %}
+
+{% endif %}
+
 {% endblock %}

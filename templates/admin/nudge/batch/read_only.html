@@ -1,0 +1,34 @@
+<strong>The batch "{{ object.title }}" already been pushed, and can not be edited</strong>
+
+
+
+{% if versions_selected %}
+<h2>Changes attached to this batch</h2>
+<table>
+	<tr><td>Type</td><td>Name</td></tr>
+{% for version in versions_selected %}
+<tr> <td>{{version.content_type.name}} </td><td>{{version.object_repr}} </td> </li>
+
+{% endfor %}
+</table>
+{% endif %}
+
+<h2>Push History</h2><ul>
+{% for hitem in history %}
+<li>{{ hitem.created }}
+{% if hitem.http_result  %}
+{% if hitem.http_result < 300  %}	
+	Success ({{ hitem.http_result }})
+{% else %}
+	Failed ({{ hitem.http_result }})
+{% endif %}
+	
+	{% else %}
+	
+	incomplete
+	
+	{% endif %}
+</li>
+{% endfor %}
+</ul>
+
