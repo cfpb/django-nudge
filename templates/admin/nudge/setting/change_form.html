@@ -56,7 +56,10 @@
 {% endfor %}
 
 {% block after_related_objects %}{% endblock %}
+
  <div class="submit-row" {% if is_popup %}style="overflow: auto;"{% endif %}>
+	<input type="submit" value="{% trans 'Regenerate Key' %}"  name="_regen_key" {{ onclick_attrib }}/>
+	
 <input type="submit" value="{% trans 'Save' %}" class="default" name="_save" {{ onclick_attrib }}/></div>
 
 {% if adminform and add %}
