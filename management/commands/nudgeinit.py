@@ -4,8 +4,8 @@ from django.core.management.base import NoArgsCommand
 
 from reversion.models import Version
 
-from nudge.models import Batch, BatchItem
-from nudge.utils import latest_objects
+from nudge.models import Batch, BatchItem, Setting
+from nudge.utils import latest_objects, generate_key
 
 """
 nudgeinit
@@ -25,6 +25,12 @@ class Command(NoArgsCommand):
         print "  - Deleting all batches and batch items"
         Batch.objects.all().delete()
         BatchItem.objects.all().delete()
+        
+        print "  - Generating initial key"
+        settings, created = Setting.objects.get_or_create(pk=1)
+        new_key= generate_key()
+        settings.local_key=new_key
+        settings.save()
         
         print "  - Creating silent batch"
         silent = Batch(title="Nudge Initialization")
