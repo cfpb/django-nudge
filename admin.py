@@ -71,11 +71,15 @@ class BatchAdmin(admin.ModelAdmin):
         attached_versions=[]
         if batch:
             attached_versions=[b.version for b in batch.batchitem_set.all()]
+            import pdb;pdb.set_trace()
             context.update({'versions_selected': attached_versions,
                             'history': batch.pushhistoryitem_set.all(),
                             'editable': not bool(batch.pushed),
                             'object': batch
-            })
+            }) 
+        else:
+            context.update({'editable': True})
+            
             
         
         if not batch or not batch.pushed:
