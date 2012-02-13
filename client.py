@@ -5,7 +5,7 @@ from Crypto.Cipher import AES
 from django.core import serializers
 
 from nudge.models import Batch, BatchItem, Setting, PushHistoryItem
-
+from nudge.exceptions import *
 from utils import related_objects
 
 """
@@ -61,7 +61,7 @@ def send_command(target, data):
     url = "%s/nudge-api/%s/" % (SETTINGS.remote_address, target)
     req = urllib2.Request(url, data)
     response = urllib2.urlopen(req)
-    return response.read()
+    return response
 
 def push_batch(batch):
     """
@@ -69,6 +69,13 @@ def push_batch(batch):
     """
     log=PushHistoryItem(batch=batch)
     log.save()
-    if send_command('batch', serialize_batch(batch)):
+    try:
+        response= send_command('batch', serialize_batch(batch))
         batch.pushed = datetime.datetime.now()
         batch.save()
+        log.http_result=response.getcode()
+        log.save()
+        if log.http_result != 200:
+            raise BatchPushFailure(http_status=response.getcode())
+    except:
+        raise BatchPushFailure

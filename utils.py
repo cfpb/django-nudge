@@ -41,7 +41,6 @@ def object_not_pushed(obj):
     
 def changed_items():
     """return list of objects that are new or changed and not pushed"""
-    
     latest = latest_objects()
     eligible = []
     for obj in latest:
