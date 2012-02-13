@@ -5,6 +5,12 @@ from reversion.models import Version
 from reversion import get_for_object
 
 
+def related_objects(obj):
+	model=type(obj)
+	relationship_names= [attr for attr in dir(model) if type(getattr(model,attr)) in  [ReverseSingleRelatedObjectDescriptor, SingleRelatedObjectDescriptor ]]
+	return [getattr(obj, relname) for relname in relationship_names if bool(getattr(obj, relname))]
+
+
 def caster(fields, model):
     relationship_names= [attr for attr in dir(model) if type(getattr(model,attr)) in  [ReverseSingleRelatedObjectDescriptor, SingleRelatedObjectDescriptor, ForeignRelatedObjectsDescriptor]]
     for relationship_name in relationship_names:

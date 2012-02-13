@@ -6,6 +6,8 @@ from django.core import serializers
 
 from nudge.models import Batch, BatchItem, Setting, PushHistoryItem
 
+from utils import related_objects
+
 """
 client.py 
 
@@ -30,8 +32,24 @@ def serialize_batch(batch):
     """
     items = BatchItem.objects.filter(batch=batch)
     versions = []
-    for item in items:
-        versions.append(item.version)
+    # this is so we can inspect the objects, but get back the exact versions requested:
+    version_lookup=dict([(item.version.object, item) for item in items])
+    objects_exploded=[]
+    # find related objects, and put them at the beginning of the exploded list
+    for obj in version_lookup.keys():
+    	related= related_objects(obj)
+    	if related:
+    		objects_exploded=related + objects_exploded
+    #append the original list to the exploded list
+    objects_exploded=[obj for obj in objects_exploded if obj in version_lookup]+version_lookup.keys()
+    objects_imploded=[]
+    #filter out duplicates and related items that aren't part of this push
+    for obj in objects_exploded:
+    	if obj not in objects_imploded and obj in version_lookup:
+    		objects_imploded.append(obj)
+    # put the batch back together. Now, related objects are pushed in a sensible order!
+    for obj in objects_imploded:
+        versions.append(version_lookup[obj].version)
     batch_items = serializers.serialize("json", versions)
     b_plaintext = pickle.dumps({ 'id':batch.id, 'title':batch.title, 'items':batch_items })
     return urllib.urlencode(encrypt_batch(b_plaintext))
