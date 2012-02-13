@@ -8,6 +8,8 @@ from utils import convert_keys_to_string
 
 from nudge.models import Setting
 
+from django.contrib.contenttypes.models import ContentType
+
 """
 server.py 
 
@@ -20,9 +22,8 @@ def get_model(model_str):
     """returns model object based on string provided by batch item"""
     app_name = model_str.split('.')[0]
     model_name = model_str.split('.')[1]
-    app = models.get_app(app_name)    
-    model_obj = getattr(app, model_name.capitalize())
-    return model_obj
+    return ContentType.objects.get_by_natural_key(app_name, model_name).model_class()
+
     
 def valid_batch(batch_info):
     """returns whether a batch format is valid"""
@@ -44,11 +45,13 @@ def process_item(item):
     
     item_content = json.loads(item['fields']['serialized_data'])[0]
     model_obj = get_model(item_content['model'])
+    
     id = item_content['pk']
-    fields = convert_keys_to_string(item_content['fields'])
+    fields = convert_keys_to_string(item_content['fields'], model_obj)
     
     if item['fields']['type'] < 2:
         # Add or Update
+        #import pdb;pdb.set_trace()
         new_item = model_obj(pk=id, **fields)
         new_item.save()
         return True
@@ -71,5 +74,7 @@ def process_batch(batch_info, iv):
         items = json.loads(batch_info['items'])
         success = True
         for item in items:
+        	import pdb;pdb.set_trace()
             success = success and process_item(item)
     return success
+

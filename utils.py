@@ -45,7 +45,7 @@ def collect_eligibles(batch):
         e.batch = batch
         e.save()
         
-def convert_keys_to_string(dictionary):
+def convert_keys_to_string(dictionary, model):
     """Recursively converts dictionary keys to strings. Found at http://stackoverflow.com/a/7027514/104365 """
     if not isinstance(dictionary, dict):
         return dictionary
