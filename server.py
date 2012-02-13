@@ -1,10 +1,11 @@
 import binascii, hashlib, json, os, pickle
+from django.core import serializers
 
 from Crypto.Cipher import AES
 
 from django.db import models
 from django.utils import importlib
-from utils import convert_keys_to_string
+from utils import convert_keys_to_string, caster
 
 from nudge.models import Setting
 
@@ -49,6 +50,7 @@ def process_item(item):
     
     if item['fields']['type'] < 2:
         # Add or Update
+        fields=caster(fields, model_obj)
         new_item = model_obj(pk=id, **fields)
         new_item.save()
         return True
