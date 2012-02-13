@@ -1,10 +1,11 @@
 import binascii, hashlib, json, os, pickle
+from django.core import serializers
 
 from Crypto.Cipher import AES
 
 from django.db import models
 from django.utils import importlib
-from utils import convert_keys_to_string
+from utils import convert_keys_to_string, caster
 
 from nudge.models import Setting
 
@@ -47,11 +48,12 @@ def process_item(item):
     model_obj = get_model(item_content['model'])
     
     id = item_content['pk']
-    fields = convert_keys_to_string(item_content['fields'], model_obj)
+    fields = convert_keys_to_string(item_content['fields'])
     
     if item['fields']['type'] < 2:
         # Add or Update
         #import pdb;pdb.set_trace()
+        fields=caster(fields, model_obj)
         new_item = model_obj(pk=id, **fields)
         new_item.save()
         return True
@@ -74,7 +76,7 @@ def process_batch(batch_info, iv):
         items = json.loads(batch_info['items'])
         success = True
         for item in items:
-        	import pdb;pdb.set_trace()
-            success = success and process_item(item)
+        	#import pdb;pdb.set_trace()
+        	success = success and process_item(item)
     return success
 

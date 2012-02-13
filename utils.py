@@ -1,8 +1,20 @@
 import hashlib, os
-
+from django.db.models.fields.related import ReverseSingleRelatedObjectDescriptor, SingleRelatedObjectDescriptor, ForeignRelatedObjectsDescriptor
 from nudge.models import Batch, BatchItem
 from reversion.models import Version
 from reversion import get_for_object
+
+
+def caster(fields, model):
+    relationship_names= [attr for attr in dir(model) if type(getattr(model,attr)) in  [ReverseSingleRelatedObjectDescriptor, SingleRelatedObjectDescriptor, ForeignRelatedObjectsDescriptor]]
+    for relationship_name in relationship_names:
+        rel=getattr(model, relationship_name)
+        if fields.has_key(relationship_name):
+        	fields[relationship_name]= rel.field.related.parent_model.objects.get(pk=fields[relationship_name])
+		
+    return fields
+
+
 
 def latest_objects():
     """returns list of lastest versions for each distinct object"""
@@ -45,7 +57,7 @@ def collect_eligibles(batch):
         e.batch = batch
         e.save()
         
-def convert_keys_to_string(dictionary, model):
+def convert_keys_to_string(dictionary):
     """Recursively converts dictionary keys to strings. Found at http://stackoverflow.com/a/7027514/104365 """
     if not isinstance(dictionary, dict):
         return dictionary
