@@ -25,14 +25,15 @@ def caster(fields, model):
 def latest_objects():
     """returns list of lastest versions for each distinct object"""
     distinct_objects = set([version.object for version in Version.objects.all() ])
-    
+    deleted_versions=[version for version in Version.objects.all() if version.object == None] 
     
     latest = []
     for o in distinct_objects:
+        if not o: continue
         latest_obj=get_for_object(o)[0]
         latest.append(latest_obj)
 
-    return latest
+    return latest + deleted_versions
     
 def object_not_pushed(obj):
     """takes a Version object and returns True if object is associated with a batch that has been pushed"""
