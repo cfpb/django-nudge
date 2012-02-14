@@ -85,7 +85,6 @@ class BatchAdmin(admin.ModelAdmin):
         if not batch or not batch.pushed:
             available_changes=[item for item in changed_items() if item not in attached_versions]
             context.update({'available_changes':available_changes})
-            
         return super(BatchAdmin, self).render_change_form(*args, **kwargs)
         
     def save_model(self, request, obj, form, change):
