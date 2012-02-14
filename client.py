@@ -79,3 +79,13 @@ def push_batch(batch):
             raise BatchPushFailure(http_status=response.getcode())
     except:
         raise BatchPushFailure
+        
+def push_test_batch():
+    """
+    pushes empty batch to server to test settings and returns True on success
+    """
+    try:
+        response=send_command('batch', serialize_batch(Batch()))
+        return False if response.getcode() != 200 else True
+    except:
+        return False
