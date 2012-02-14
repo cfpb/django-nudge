@@ -122,4 +122,3 @@ class BatchAdmin(admin.ModelAdmin):
 
 admin.site.register(Setting, SettingsAdmin)
 admin.site.register(Batch, BatchAdmin)
-admin.site.register(BatchItem)
