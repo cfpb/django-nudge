@@ -1,12 +1,15 @@
 import binascii, hashlib, json, os, pickle
+from django.core import serializers
 
 from Crypto.Cipher import AES
 
 from django.db import models
 from django.utils import importlib
-from utils import convert_keys_to_string
+from utils import convert_keys_to_string, caster
 
 from nudge.models import Setting
+
+from django.contrib.contenttypes.models import ContentType
 
 """
 server.py 
@@ -20,9 +23,7 @@ def get_model(model_str):
     """returns model object based on string provided by batch item"""
     app_name = model_str.split('.')[0]
     model_name = model_str.split('.')[1]
-    app = models.get_app(app_name)    
-    model_obj = getattr(app, model_name.capitalize())
-    return model_obj
+    return ContentType.objects.get_by_natural_key(app_name, model_name).model_class()
     
 def valid_batch(batch_info):
     """returns whether a batch format is valid"""
@@ -49,6 +50,7 @@ def process_item(item):
     
     if item['fields']['type'] < 2:
         # Add or Update
+        fields=caster(fields, model_obj)
         new_item = model_obj(pk=id, **fields)
         new_item.save()
         return True

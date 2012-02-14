@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.admin.options import *
+from django.contrib import messages
 from django.forms import ModelForm
 from django import forms
 from django.utils.translation import ugettext as _
@@ -75,7 +76,10 @@ class BatchAdmin(admin.ModelAdmin):
                             'history': batch.pushhistoryitem_set.all(),
                             'editable': not bool(batch.pushed),
                             'object': batch
-            })
+            }) 
+        else:
+            context.update({'editable': True})
+            
             
         
         if not batch or not batch.pushed:
@@ -104,9 +108,13 @@ class BatchAdmin(admin.ModelAdmin):
             from client import push_batch
             if obj.is_valid():
                 obj.save()
-                push_batch(obj)
+                try:
+                    push_batch(obj)
+                    messages.info(request, "Batch was pushed successfully")
+                except BatchPushFailure as exc:
+                    messages.error(request, "Pushing this batch failed (%s), please notify a system administrator" % exc.http_status)
             else:
-                raise BatchValidationError(obj)
+                messages.error(request, "This batch is invalid (perhaps there are items that are already in other batches?)")
                 
 
 

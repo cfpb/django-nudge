@@ -75,15 +75,35 @@
 
 
 {% if available_changes %}
-<h2> Available Changes</h2><ul>
-{% for version in available_changes %}
+<h2> Available Changes</h2>
+	
+{% regroup available_changes by content_type as typed_changes_list %}
+	
+<table>
+	<tr>
+		{% for type in typed_changes_list %}
+			<th>	{{type.grouper.name|capfirst}} </th>
+		{% endfor %}
+	
+	</tr>
+<tr>
+	{% for type in typed_changes_list %}
 
-<li><input type="checkbox" name="changes_in_batch" value="{{version.id}}" /> [{{version.content_type.name}}] {{version.object}}</li>
+	<td>
+		<a class='selectall' href="#">select all</a> 
+		 <ul>{% for version in type.list %}
+
+		<li><input type="checkbox" name="changes_in_batch" value="{{version.id}}" class="{{type.grouper.name}}_version"/>  {{version.object_repr}}</li>
+
+{% endfor %} </ul>
+
+ </td>
 
 
 
 {% endfor %}
-</ul>
+</tr>
+</table>
 {% endif %}
 {% submit_batch_row %}
 {% for history_item in history %}
@@ -101,6 +121,18 @@
 
 </div>
 </form></div>
+
+<script>
+django.jQuery(function(){
+	django.jQuery('a.selectall').click(function(){
+		this_link=django.jQuery(this);
+		parent=this_link.parent();
+		checkboxes=django.jQuery('input', parent).attr('checked','checked');
+	})
+	
+})
+
+</script>
 {% else %}
 {% include "admin/nudge/batch/read_only.html" %}
 
