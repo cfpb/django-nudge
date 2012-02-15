@@ -14,16 +14,20 @@ client.py
 commands to send to nudge server
 """
 
-SETTINGS = Setting.objects.get(pk=1)
+SETTINGS, created = Setting.objects.get_or_create(pk=1)
 
-def encrypt_batch(b_plaintext):
-    """encrypts a pickled batch for sending to server"""
-    key = SETTINGS.remote_key.decode('hex')
+def encrypt(key, plaintext):
     m = hashlib.md5(os.urandom(16))
     iv = m.digest()
     encobj = AES.new(key, AES.MODE_CBC, iv)
     pad = lambda s: s + (16 - len(s) % 16) * ' '
-    return { 'batch': encobj.encrypt(pad(b_plaintext)).encode('hex'), 'iv':iv.encode('hex') }
+    return (encobj.encrypt(pad(plaintext)).encode('hex'), iv)
+
+def encrypt_batch(b_plaintext):
+    """encrypts a pickled batch for sending to server"""
+    key = SETTINGS.remote_key.decode('hex')
+    encrypted, iv= encrypt(key, b_plaintext)
+    return { 'batch': encrypted , 'iv':iv.encode('hex') }
 
 def serialize_batch(batch):
     """
