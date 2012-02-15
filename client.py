@@ -23,13 +23,12 @@ def encrypt(key, plaintext):
     pad = lambda s: s + (16 - len(s) % 16) * ' '
     return (encobj.encrypt(pad(plaintext)).encode('hex'), iv)
 
-def encrypt_batch(b_plaintext):
+def encrypt_batch(key, b_plaintext):
     """encrypts a pickled batch for sending to server"""
-    key = SETTINGS.remote_key.decode('hex')
     encrypted, iv= encrypt(key, b_plaintext)
     return { 'batch': encrypted , 'iv':iv.encode('hex') }
 
-def serialize_batch(batch):
+def serialize_batch(key, batch):
     """
     returns urlecncoded pickled serialization of a batch ready to be sent to 
     server.
@@ -56,7 +55,8 @@ def serialize_batch(batch):
         versions.append(version_lookup[obj].version)
     batch_items = serializers.serialize("json", versions)
     b_plaintext = pickle.dumps({ 'id':batch.id, 'title':batch.title, 'items':batch_items })
-    return urllib.urlencode(encrypt_batch(b_plaintext))
+    
+    return urllib.urlencode(encrypt_batch(key, b_plaintext))
     
 def send_command(target, data):
     """
@@ -73,8 +73,9 @@ def push_batch(batch):
     """
     log=PushHistoryItem(batch=batch)
     log.save()
+    key = SETTINGS.remote_key.decode('hex')
     try:
-        response= send_command('batch', serialize_batch(batch))
+        response= send_command('batch', serialize_batch(key,batch))
         batch.pushed = datetime.datetime.now()
         batch.save()
         log.http_result=response.getcode()

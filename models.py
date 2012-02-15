@@ -25,7 +25,7 @@ class Batch(models.Model):
                  if test_only:
                      valid=False
                  else:
-                     raise BatchValidationError
+                     raise BatchValidationError(self)
                 
 
              return valid

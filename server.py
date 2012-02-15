@@ -64,9 +64,6 @@ def process_batch(batch_info, iv):
     """
     loops through items in a batch and processes them
     """
-    print batch_info
-    print iv
-    print iv.decode('hex')
     key = SETTINGS.local_key.decode('hex')
     batch_info = pickle.loads(decrypt(key, batch_info, iv.decode('hex')))
     if valid_batch(batch_info):
