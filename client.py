@@ -56,14 +56,14 @@ def serialize_batch(key, batch):
     batch_items = serializers.serialize("json", versions)
     b_plaintext = pickle.dumps({ 'id':batch.id, 'title':batch.title, 'items':batch_items })
     
-    return urllib.urlencode(encrypt_batch(key, b_plaintext))
+    return encrypt_batch(key, b_plaintext)
     
 def send_command(target, data):
     """
     sends a nudge api command
     """
     url = "%s/nudge-api/%s/" % (SETTINGS.remote_address, target)
-    req = urllib2.Request(url, data)
+    req = urllib2.Request(url, urllib.urlencode(data))
     response = urllib2.urlopen(req)
     return response
 

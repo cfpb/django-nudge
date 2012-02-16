@@ -9,14 +9,16 @@ from Crypto.Cipher import AES
 
 from django.core import serializers
 import reversion
+from reversion.models import Version
 
 from django.test import TestCase
 from django.db import models
+from django.core.exceptions import *
 
 from nudge.utils import *
 from nudge.client import encrypt, serialize_batch
-from nudge.server import decrypt
-from nudge.models import Batch
+from nudge.server import decrypt, process_batch
+from nudge.models import Batch, BatchItem, PushHistoryItem
 from nudge.exceptions import *
 
 from nudge.demo.models import Post, Author
@@ -33,6 +35,9 @@ def create_author():
          new_author.save()
          return new_author
 
+@reversion.create_revision()
+def delete_with_reversion(object):
+    object.delete()
 
 
 class EncryptionTest(TestCase):
@@ -53,13 +58,32 @@ class EncryptionTest(TestCase):
         decrypted= decrypt(key.decode('hex'), encrypted, iv)
         self.assertEqual(message, decrypted.strip())
         
-    def test_batch_serialization(self):
-        key=generate_key()
-        batch=Batch(title="Best Batch Ever")
-        batch.save()
-        add_versions_to_batch(batch, changed_items())
-        serialized= serialize_batch(key.decode('hex'),batch)
         
+
+class BatchTest(TestCase):
+    def setUp(self):
+        self.key=generate_key()
+        self.batch=Batch(title="Best Batch Ever")
+        self.new_author=create_author()
+        self.batch.save()
+        
+        
+    def tearDown(self):
+        Author.objects.all().delete()
+        BatchItem.objects.all().delete()
+        
+        
+    def test_batch_serialization_and_processing(self):
+        add_versions_to_batch(self.batch, changed_items())
+        serialized= serialize_batch(self.key.decode('hex'),self.batch)
+        processed_batch=process_batch(self.key.decode('hex'), serialized['batch'], serialized['iv'])
+        
+    def test_batch_with_deletion(self):
+        delete_with_reversion(self.new_author)
+        add_versions_to_batch(self.batch, changed_items())
+        serialized= serialize_batch(self.key.decode('hex'),self.batch)
+        with self.assertRaises(ObjectDoesNotExist): # because it doesn't exist anymore in this database
+            processed_batch=process_batch(self.key.decode('hex'), serialized['batch'], serialized['iv'])
 
 class VersionTest(TestCase):
     def setUp(self):
@@ -77,6 +101,10 @@ class VersionTest(TestCase):
         new_batch.save()
         add_versions_to_batch(new_batch, changed_items())
         self.assertIn(self.new_author, [bi.version.object for bi in  new_batch.batchitem_set.all()])
+        
+    def test_add_deletion_to_batch(self):
+        delete_with_reversion(self.new_author)
+        
         
         
     def test_batch_validation(self):
