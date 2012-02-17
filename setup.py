@@ -13,12 +13,12 @@ except ImportError:
 
 
 setup(name="django-nudge",
-      version="0.5.2",
+      version="0.5.3",
       description="Use Nudge to (gently) push content between Django servers",
       author="Joshua Ruihley, Ross Karchner",
       author_email="joshua.ruihley@cfpb.gov",
       url="https://github.com/jroo/django-nudge",
-      download_url="https://github.com/downloads/jroo/django-nudge/django-nudge-0.5.1.tar.gz",
+      download_url="https://github.com/downloads/jroo/django-nudge/django-nudge-0.5.3.tar.gz",
       zip_safe=False,
       packages=["nudge", "nudge.demo"],
       package_dir={"": "src"},
