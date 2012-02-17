@@ -1,0 +1,5 @@
+include src/nudge/templates/*.html
+include src/nudge/templates/admin/nudge/*.html
+include src/nudge/templates/admin/nudge/batch/*.html 
+include src/nudge/templates/admin/nudge/setting/*.html 
+include README.markdown

@@ -4,10 +4,9 @@ from reversion.models import Version
 from exceptions import *
     
 class Setting(models.Model):
-    local_address = models.CharField(max_length=255, null=True, blank=True)
-    local_key = models.CharField(max_length=255, null=True, blank=True)
-    remote_address = models.CharField(max_length=255, null=True, blank=True)
-    remote_key = models.CharField(max_length=255, null=True, blank=True)
+    local_key = models.CharField("Secret",max_length=255, null=True, blank=True, help_text="This is the key your client will need to push changes to this server.")
+    remote_address = models.CharField("Server to push changes to", max_length=255, null=True, blank=True, help_text="This will be blank on your production server")
+    remote_key = models.CharField(max_length=255, null=True, blank=True, help_text="This is the 'secret' displayed in the Nudge settings displayed on your production server")
         
 class Batch(models.Model):
     title = models.TextField(max_length=255)
@@ -26,7 +25,7 @@ class Batch(models.Model):
                  if test_only:
                      valid=False
                  else:
-                     raise BatchValidationError
+                     raise BatchValidationError(self)
                 
 
              return valid

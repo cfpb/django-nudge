@@ -7,6 +7,7 @@ from django.utils.translation import ugettext as _
 
 
 from nudge.models import Batch, BatchItem, Setting
+from nudge.client import push_test_batch
 
 from reversion.admin import VersionAdmin
 from reversion.models import Version
@@ -54,6 +55,11 @@ class SettingsAdmin(admin.ModelAdmin):
                 return HttpResponseRedirect(request.path + "?_popup=1")
             else:
                 return HttpResponseRedirect(request.path)
+        elif '_test' in request.POST:
+            if push_test_batch():
+                messages.info(request, "It works! Communication with remote server was successful.")
+            else:
+                messages.error(request, "Pushing a test batch failed-- please see a system administrator")
         return super(SettingsAdmin, self).response_change(request,object)
 
 
@@ -85,7 +91,6 @@ class BatchAdmin(admin.ModelAdmin):
         if not batch or not batch.pushed:
             available_changes=[item for item in changed_items() if item not in attached_versions]
             context.update({'available_changes':available_changes})
-            
         return super(BatchAdmin, self).render_change_form(*args, **kwargs)
         
     def save_model(self, request, obj, form, change):
@@ -123,4 +128,3 @@ class BatchAdmin(admin.ModelAdmin):
 
 admin.site.register(Setting, SettingsAdmin)
 admin.site.register(Batch, BatchAdmin)
-admin.site.register(BatchItem)

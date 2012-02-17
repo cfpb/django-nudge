@@ -14,18 +14,21 @@ client.py
 commands to send to nudge server
 """
 
-SETTINGS = Setting.objects.get(pk=1)
+SETTINGS, created = Setting.objects.get_or_create(pk=1)
 
-def encrypt_batch(b_plaintext):
-    """encrypts a pickled batch for sending to server"""
-    key = SETTINGS.remote_key.decode('hex')
+def encrypt(key, plaintext):
     m = hashlib.md5(os.urandom(16))
     iv = m.digest()
     encobj = AES.new(key, AES.MODE_CBC, iv)
     pad = lambda s: s + (16 - len(s) % 16) * ' '
-    return { 'batch': encobj.encrypt(pad(b_plaintext)).encode('hex'), 'iv':iv.encode('hex') }
+    return (encobj.encrypt(pad(plaintext)).encode('hex'), iv)
 
-def serialize_batch(batch):
+def encrypt_batch(key, b_plaintext):
+    """encrypts a pickled batch for sending to server"""
+    encrypted, iv= encrypt(key, b_plaintext)
+    return { 'batch': encrypted , 'iv':iv.encode('hex') }
+
+def serialize_batch(key, batch):
     """
     returns urlecncoded pickled serialization of a batch ready to be sent to 
     server.
@@ -52,14 +55,15 @@ def serialize_batch(batch):
         versions.append(version_lookup[obj].version)
     batch_items = serializers.serialize("json", versions)
     b_plaintext = pickle.dumps({ 'id':batch.id, 'title':batch.title, 'items':batch_items })
-    return urllib.urlencode(encrypt_batch(b_plaintext))
+    
+    return encrypt_batch(key, b_plaintext)
     
 def send_command(target, data):
     """
     sends a nudge api command
     """
     url = "%s/nudge-api/%s/" % (SETTINGS.remote_address, target)
-    req = urllib2.Request(url, data)
+    req = urllib2.Request(url, urllib.urlencode(data))
     response = urllib2.urlopen(req)
     return response
 
@@ -69,8 +73,9 @@ def push_batch(batch):
     """
     log=PushHistoryItem(batch=batch)
     log.save()
+    key = SETTINGS.remote_key.decode('hex')
     try:
-        response= send_command('batch', serialize_batch(batch))
+        response= send_command('batch', serialize_batch(key,batch))
         batch.pushed = datetime.datetime.now()
         batch.save()
         log.http_result=response.getcode()
@@ -79,3 +84,13 @@ def push_batch(batch):
             raise BatchPushFailure(http_status=response.getcode())
     except:
         raise BatchPushFailure
+        
+def push_test_batch():
+    """
+    pushes empty batch to server to test settings and returns True on success
+    """
+    try:
+        response=send_command('batch', serialize_batch(Batch()))
+        return False if response.getcode() != 200 else True
+    except:
+        return False

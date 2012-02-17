@@ -9,7 +9,7 @@ class BatchValidationError(BaseNudgeException):
     
     def __init__(self,batch):
         self.batch=batch
-        self.msg="Hi"
+        self.msg="Batch Validation Failed"
         
 class BatchPushFailure(BaseNudgeException):
     "Pushing this batch failed"

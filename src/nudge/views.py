@@ -3,7 +3,10 @@ from django.views.decorators.csrf import csrf_exempt
 
 from server import process_batch
 
+SETTINGS, created = Setting.objects.get_or_create(pk=1)
+
 @csrf_exempt
 def batch(request):
-    result = process_batch(request.POST['batch'], request.POST['iv'])
+    key = SETTINGS.local_key.decode('hex')
+    result = process_batch(key, request.POST['batch'], request.POST['iv'])
     return HttpResponse(result)
