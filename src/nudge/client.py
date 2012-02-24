@@ -90,7 +90,8 @@ def push_test_batch():
     pushes empty batch to server to test settings and returns True on success
     """
     try:
-        response=send_command('batch', serialize_batch(Batch()))
+        key = SETTINGS.remote_key.decode('hex')
+        response=send_command('batch', serialize_batch(key, Batch()))
         return False if response.getcode() != 200 else True
     except:
         return False
