@@ -3,6 +3,9 @@ from django.views.decorators.csrf import csrf_exempt
 
 from server import process_batch
 
+from nudge.models import *
+
+
 SETTINGS, created = Setting.objects.get_or_create(pk=1)
 
 @csrf_exempt
