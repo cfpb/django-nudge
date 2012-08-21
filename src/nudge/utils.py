@@ -1,8 +1,34 @@
 import hashlib, os
 from django.db.models.fields.related import ReverseSingleRelatedObjectDescriptor, SingleRelatedObjectDescriptor, ForeignRelatedObjectsDescriptor
+from django.contrib.contenttypes.models import ContentType
 from nudge.models import Batch, BatchItem
-from reversion.models import Version
+from reversion.models import Version, Revision
 from reversion import get_for_object
+
+from django.conf import settings
+
+
+class PotentialBatchItem(object):
+	def __init__(self, version, batch=None):
+            self.content_type=version.content_type
+            self.pk=version.object_id
+            self.repr= version.object_repr
+            self.version=version
+            if batch:
+                self.selected=self.key() in batch.selected_items
+
+	
+        def __eq__(self, other):
+            return (self.content_type==other.content_type and self.pk==other.pk)
+
+        def __unicode__(self):
+            return self.repr
+
+        def key(self):
+            return '~'.join([self.content_type.app_label,self.content_type.model, self.pk])
+
+
+
 
 
 def related_objects(obj):
@@ -22,38 +48,25 @@ def caster(fields, model):
 
 
 
-def latest_objects():
-    """returns list of lastest versions for each distinct object"""
-    distinct_objects = set([version.object for version in Version.objects.all() ])
-    deleted_versions=[version for version in Version.objects.all() if version.object == None] 
     
-    latest = []
-    for o in distinct_objects:
-        if not o: continue
-        latest_obj=get_for_object(o)[0]
-        latest.append(latest_obj)
-
-    return latest + deleted_versions
-    
-def object_not_pushed(obj):
-    """takes a Version object and returns True if object is associated with a batch that has been pushed"""
-    batch_items = BatchItem.objects.filter(version=obj).filter(batch__pushed__isnull=False)
-    return not batch_items
-    
-def changed_items():
+def changed_items(for_date, batch=None):
     """return list of objects that are new or changed and not pushed"""
-    latest = latest_objects()
-    eligible = []
-    for obj in latest:
-        if object_not_pushed(obj):
-            eligible.append(obj)
+    types=[]
+    for type_key in settings.NUDGE_SELECTIVE:
+       app, model = type_key.split('.')
+       types.append(ContentType.objects.get_by_natural_key(app,model))
     
-    return eligible
+
+
+    eligible_versions=Version.objects.all().filter(revision__date_created__gte=for_date).filter(content_type__in=types).order_by('-revision__date_created')
+    
+
+    return set([PotentialBatchItem(version, batch=batch) for version in eligible_versions])
 
 def add_versions_to_batch(batch, versions):
     """takes a list of Version obects, and adds them to the given Batch"""
     for v in versions:
-        item = BatchItem(object_id=v.object_id, version=v, batch=batch)
+        item = BatchItem(version=v, batch=batch)
         item.save()
 
 def collect_eligibles(batch):

@@ -5,11 +5,17 @@ from server import process_batch
 
 from nudge.models import *
 
+from django.conf import settings
 
-SETTINGS, created = Setting.objects.get_or_create(pk=1)
 
 @csrf_exempt
 def batch(request):
-    key = SETTINGS.local_key.decode('hex')
+    return HttpResponse('hello')
+    key = settings.NUDGE_KEY.decode('hex')
     result = process_batch(key, request.POST['batch'], request.POST['iv'])
     return HttpResponse(result)
+
+
+@csrf_exempt
+def check_versions(request):
+    import pdb;pdb.set_trace()

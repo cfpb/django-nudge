@@ -5,11 +5,11 @@ from Crypto.Cipher import AES
 
 from django.core import serializers
 
-from nudge.models import Batch, BatchItem, Setting, PushHistoryItem
+from nudge.models import Batch, BatchItem, PushHistoryItem
 from nudge.exceptions import *
 from utils import related_objects
 
-
+from django.conf import settings
 
 """
 client.py 
@@ -17,7 +17,7 @@ client.py
 commands to send to nudge server
 """
 
-SETTINGS, created = Setting.objects.get_or_create(pk=1)
+
 
 def encrypt(key, plaintext):
     m = hashlib.md5(os.urandom(16))
@@ -36,49 +36,27 @@ def serialize_batch(key, batch):
     returns urlecncoded pickled serialization of a batch ready to be sent to 
     server.
     """
-    items = BatchItem.objects.filter(batch=batch)
-    versions = []
-    # this is so we can inspect the objects, but get back the exact versions requested:
-    version_lookup=dict([(item.version.object, item) for item in items])
-    objects_exploded=[]
-    # find related objects, and put them at the beginning of the exploded list
-    for obj in version_lookup.keys():
-    	related= related_objects(obj)
-    	if related:
-    		objects_exploded=related + objects_exploded
-    
-    #append the original list to the exploded list
-    objects_exploded=objects_exploded+version_lookup.keys()
-    objects_imploded=[]
-    #filter out duplicates and related items that aren't part of this push
-    
-    for obj in objects_exploded:
-    	if obj not in objects_imploded:
-    		objects_imploded.append(obj)
-    # put the batch back together. Now, related objects are pushed in a sensible order!
-    
-    unversioned=[]
-    for obj in objects_imploded:
-        
-	if obj in version_lookup:
-        	versions.append(version_lookup[obj].version)
-        else:
-            unversioned.append(obj)
-
-    batch_items = serializers.serialize("json", unversioned + versions)
-    b_plaintext = pickle.dumps({ 'id':batch.id, 'title':batch.title, 'items':batch_items })
+    import pdb;pdb.set_trace()
+    batch_items = BatchItem.objects.filter(batch=batch)
+    batch_items_serialized = serializers.serialize("json", [batch_item.version for batch_item in batch_items])
+    b_plaintext = pickle.dumps({ 'id':batch.id, 'title':batch.title, 'items':batch_items_serialized })
     
     return encrypt_batch(key, b_plaintext)
     
+
+
+
+
 def send_command(target, data):
     """
     sends a nudge api command
     """
-    url= urljoin(SETTINGS.remote_address, '/nudge-api/'+ target+'/')
+    url= urljoin(settings.NUDGE_REMOTE_ADDRESS, target)
 
     req = urllib2.Request(url, urllib.urlencode(data))
 
     response = urllib2.urlopen(req)
+
     return response
 
 def push_batch(batch):
@@ -87,9 +65,10 @@ def push_batch(batch):
     """
     log=PushHistoryItem(batch=batch)
     log.save()
-    key = SETTINGS.remote_key.decode('hex')
+    key = settings.NUDGE_KEY.decode('hex')
     try:
-        response= send_command('batch', serialize_batch(key,batch))
+        
+        response= send_command('batch/', serialize_batch(key,batch))
         batch.pushed = datetime.datetime.now()
         batch.save()
         log.http_result=response.getcode()
@@ -104,8 +83,8 @@ def push_test_batch():
     pushes empty batch to server to test settings and returns True on success
     """
     try:
-        key = SETTINGS.remote_key.decode('hex')
-        response=send_command('batch', serialize_batch(key, Batch()))
+        key = settings.NUDGE_KEY.decode('hex')
+        response=send_command('batch/', serialize_batch(key, Batch()))
         return False if response.getcode() != 200 else True
     except:
         return False

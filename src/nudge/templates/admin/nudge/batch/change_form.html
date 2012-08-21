@@ -77,33 +77,24 @@
 {% if available_changes %}
 <h2> Available Changes</h2>
 	
-{% regroup available_changes by content_type as typed_changes_list %}
-	
-<table>
-	<tr>
-		{% for type in typed_changes_list %}
-			<th>	{{type.grouper.name|capfirst}} </th>
-		{% endfor %}
-	
-	</tr>
-<tr>
-	{% for type in typed_changes_list %}
+{% for content_type, items in available_changes %}
 
-	<td>
-		<a class='selectall' href="#">select all</a> 
-		 <ul>{% for version in type.list %}
+<h3>{{ content_type.name }} ({{content_type.app_label}})</h3>
 
-		<li><input type="checkbox" name="changes_in_batch" value="{{version.id}}" class="{{type.grouper.name}}_version"/>  {{version.object_repr}} ({{version.type|change_type}})</li>
+<ul>
+{% for item in items %}
 
-{% endfor %} </ul>
+<li><input type="checkbox" name="changes_in_batch" value="{{item.key}}" {% if item.selected %}checked='yes'{% endif %} /> {{item}}</li>
+{% endfor %}
 
- </td>
-
-
+</ul>
 
 {% endfor %}
-</tr>
-</table>
+
+
+
+
+
 {% endif %}
 {% submit_batch_row %}
 {% for history_item in history %}

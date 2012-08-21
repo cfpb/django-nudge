@@ -7,9 +7,7 @@ from django.db import models
 from django.utils import importlib
 from utils import convert_keys_to_string, caster
 
-from nudge.models import Setting
 
-from django.contrib.contenttypes.models import ContentType
 from reversion.models import Version
 
 """
