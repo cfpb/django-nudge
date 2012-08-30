@@ -1,7 +1,8 @@
-import hashlib, os
+import hashlib, os, json
 from django.db.models.fields.related import ReverseSingleRelatedObjectDescriptor, SingleRelatedObjectDescriptor, ForeignRelatedObjectsDescriptor
 from django.contrib.contenttypes.models import ContentType
 from nudge.models import Batch, BatchPushItem, version_type_map
+
 from reversion.models import Version, Revision
 from reversion import get_for_object
 
@@ -64,6 +65,7 @@ def caster(fields, model):
     
 def changed_items(for_date, batch=None):
     """return list of objects that are new or changed and not pushed"""
+    from nudge.client import send_command
     types=[]
     for type_key in settings.NUDGE_SELECTIVE:
        app, model = type_key.split('.')
@@ -71,14 +73,18 @@ def changed_items(for_date, batch=None):
     
 
 
-    eligible_versions=Version.objects.all().filter(revision__date_created__gte=for_date).filter(content_type__in=types).order_by('-revision__date_created').distinct(['content_type_id','object_id'])
+    eligible_versions=Version.objects.all().filter(revision__date_created__gte=for_date).filter(content_type__in=types).order_by('-revision__date_created')
     
     pot_batch_items=[PotentialBatchItem(version, batch=batch) for version in eligible_versions]
  
     seen_pbis=[]
-
+    keys=[pbi.key() for pbi in pot_batch_items]
+    remote_versions_str= send_command('check-versions/', {'keys':json.dumps(keys)}).read()
+    remote_versions=json.loads(remote_versions_str)
+   
     def seen(key):
         if key not in seen_pbis:
+            
             seen_pbis.append(key)
             return True
         else:
@@ -86,7 +92,19 @@ def changed_items(for_date, batch=None):
 
     
     pot_batch_items=filter(seen,pot_batch_items)
-    return set(pot_batch_items)
+    screened_pbis=[]
+    for pbi in pot_batch_items:
+        remote_details= remote_versions[pbi.key()]
+        if remote_details:
+            remote_version_pk, remote_version_type, timestamp= remote_details
+            if not(remote_version_pk == pbi.version.pk):
+                pbi.remote_timestamp=timestamp
+                pbi.remote_change_type= version_type_map[remote_version_type]
+                screened_pbis.append(pbi)
+        else:
+            screened_pbis.append(pbi)
+
+    return screened_pbis
 
 def add_versions_to_batch(batch, versions):
     """takes a list of Version obects, and adds them to the given Batch"""

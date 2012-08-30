@@ -38,12 +38,13 @@
 
 <h1>Batch Contents</h1>
 
+{% if batch_push_items %} 
 {% regroup batch_push_items by version.content_type as ct_list %}
 
 {% for ct in ct_list %}
 
 <h3>{{ ct.grouper.name}} ({{ct.grouper.app_label}})</h3>
-<table>
+<table id="changes">
 <tr><th>Item Name</th>   <th>Revision Type</th> <th>Date</th> <th>status</th></tr>
 {% for batch_item in ct.list %}
 
@@ -52,16 +53,17 @@
 {% endfor %}
 </table>
 {% endfor %}
-<div> <form method='POST'>
-{% if not object.first_push_attempt %}
+<div id="push-buttons"> <form method='POST'>
 
-<input type="submit" value="Edit Batch" name="abort_preflight"/> 
-
-{% endif %}
 <input type="submit" value="Push Now" name="push_now"/> 
 {% csrf_token %}
 </form>
 </div>
+{% else %}
+
+<p>No changes in this batch!</p>
+
+{% endif %}
 {% endblock %}
 
 
@@ -110,10 +112,18 @@ django.jQuery(document).ajaxSend(function(event, xhr, settings) {
     }
 });
 
+scrub_buttons=function(){
+if (django.jQuery('tr.push-pending').length == 0){
+            django.jQuery("input[name=push_now]").remove()
+          }
 
+if (django.jQuery('tr.push-pending').length == 0){
+            django.jQuery("input[name=push_now]").remove()
+          }
 
+}
 django.jQuery(function(){
-        
+        scrub_buttons();
 	django.jQuery("input[name=push_now]").click(function(){
           django.jQuery(".push-pending").each(function(index){
               var this_tr=django.jQuery(this)
@@ -123,15 +133,16 @@ django.jQuery(function(){
               'type':'POST',
               'data': {'push-batch-item': pk},
               'success': function(data){
-                 this_tr.replaceWith(data)
+                 this_tr.replaceWith(data);
+                 scrub_buttons();
               }
               });
              
-           })
+           });
         return false;
-        })
+        });
 	
-})
+});
 
 </script>
 

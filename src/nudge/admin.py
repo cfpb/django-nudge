@@ -17,7 +17,7 @@ from django.shortcuts import render_to_response, redirect
 from django.utils.safestring import mark_safe
 
 from nudge.models import Batch, BatchPushItem, default_batch_start_date
-from nudge.client import push_batch, push_one
+from nudge.client import push_batch, push_one, send_command
 
 from reversion.admin import VersionAdmin
 from reversion.models import Version
@@ -53,7 +53,6 @@ class BatchAdmin(admin.ModelAdmin):
         else:
             available_changes=[item for item in changed_items(default_batch_start_date()) if item not in attached_versions]
             
-
         context.update({'available_changes':available_changes})
 
         return super(BatchAdmin, self).render_change_form(*args, **kwargs)
@@ -123,6 +122,9 @@ class BatchAdmin(admin.ModelAdmin):
 
         if request.is_ajax() and u'push-batch-item' in request.POST:
             batch_push_item=BatchPushItem.objects.get(pk=request.POST[u'push-batch-item'])
+            if not batch_push_item.batch.first_push_attempt:
+                batch_push_item.batch.first_push_attempt= datetime.now()
+                batch_push_item.batch.save()
             push_one(batch_push_item)
             return render_to_response('admin/nudge/batch/_batch_item_row.html', {'batch_item': batch_push_item})
             

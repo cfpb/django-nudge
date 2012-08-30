@@ -1,12 +1,14 @@
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from server import process_batch
+from server import process_batch, versions
 
 from nudge.models import *
-from reversion.models import Version
+
 
 from django.conf import settings
+
+import json
 
 
 @csrf_exempt
@@ -19,4 +21,6 @@ def batch(request):
 
 @csrf_exempt
 def check_versions(request):
-    import pdb;pdb.set_trace()
+    keys=json.loads(request.POST[u'keys'])
+    result=versions(keys)
+    return HttpResponse(result)

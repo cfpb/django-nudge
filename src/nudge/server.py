@@ -7,8 +7,10 @@ from django.db import models
 from django.utils import importlib
 from utils import convert_keys_to_string, caster
 
-
+from django.contrib.contenttypes.models import ContentType
 from reversion.models import Version
+
+from nudge.models import version_type_map
 
 """
 server.py 
@@ -28,6 +30,23 @@ def decrypt(key, ciphertext, iv):
     decobj = AES.new(key, AES.MODE_CBC, iv)
     plaintext = decobj.decrypt(ciphertext)
     return plaintext
+
+def versions(keys):
+    results={}
+    for key in keys:
+        app, model, pk=key.split('~')
+        content_type=ContentType.objects.get_by_natural_key(app,model)
+        versions=Version.objects.all().filter(content_type=content_type).filter(object_id=pk).order_by('-revision__date_created')
+
+        if versions:
+            latest=versions[0]
+            results[key]= (latest.pk,latest.type, latest.revision.date_created.strftime('%b %d, %Y, %I:%M %p'))
+
+        else:
+            results[key]=None
+ 
+    
+    return json.dumps(results)
     
 def process_batch(key, batch_info, iv):
     """

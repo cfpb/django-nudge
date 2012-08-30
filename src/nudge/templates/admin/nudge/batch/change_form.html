@@ -84,7 +84,7 @@
 <h3>{{ ct.grouper.name }} ({{ct.grouper.app_label}})</h3>
 
 <table>
-<tr><th/><th>Item Name</th>   <th>Revision Type</th> <th>Date</th></tr>
+<tr><th/><th>Item Name</th>   <th>Revision Type</th> <th>Date</th><th>Remote updated</th></tr>
 {% for change in ct.list %}
 
 <tr>
@@ -92,7 +92,9 @@
 <td> {{change}}</td>
 <td> {{change.version_type_string}} </td>
    <td>{{change.version.revision.date_created }}</td>
-
+ <td>{% if change.remote_timestamp %} {{change.remote_timestamp}} ({{change.remote_change_type}}) 
+   {% else %} New {% endif %}
+ </td>
 </tr>
 {% endfor %}
 

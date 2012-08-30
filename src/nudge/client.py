@@ -37,8 +37,11 @@ def serialize_objects(key, batch_push_items):
     server.
     """
     batch_versions = [batch_item.version for batch_item in batch_push_items]
+    revisions=[]
     related_objects=[]
     for version in batch_versions:
+        if version.revision not in revisions:
+            revisions.append(version.revision)
         if version.object:
             for related_object in [getattr(version.object, f.name) for f in version.object._meta.fields if type(f) == models.fields.related.ForeignKey]:
                 versions=get_for_object(related_object)
@@ -48,7 +51,7 @@ def serialize_objects(key, batch_push_items):
                 else:
                     related_objects.append(related_object)
 
-    batch_items_serialized = serializers.serialize("json", related_objects+batch_versions)
+    batch_items_serialized = serializers.serialize("json", revisions+related_objects+batch_versions)
     b_plaintext = pickle.dumps({ 'items':batch_items_serialized })
     
     return encrypt_batch(key, b_plaintext)
