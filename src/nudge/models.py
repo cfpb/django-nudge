@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
-from reversion.models import Version
+from reversion.models import Version, VERSION_TYPE_CHOICES
 
 import json
 
@@ -8,12 +8,19 @@ from datetime import date
 
 from exceptions import *
     
+version_type_map=dict(VERSION_TYPE_CHOICES)
 
 class BatchPushItem(models.Model):
-    batch=models.ForeignKey(Batch)
+    batch=models.ForeignKey('Batch')
     version=models.ForeignKey(Version)
     last_tried=models.DateTimeField(null=True)
-    last_attempt_success=models.BooleanField(null=True)
+    success=models.BooleanField(default=False)
+
+    def __unicode__(self):
+        return unicode(self.version)
+
+    def version_type_string(self):
+        return version_type_map[self.version.type]
 
 
 def default_batch_start_date():
@@ -43,6 +50,7 @@ class Batch(models.Model):
                  
     @property
     def selected_items(self):
+       
        if not hasattr(self, '_selected_items'):
            self._selected_items=json.loads(self.selected_items_packed)
        return self._selected_items

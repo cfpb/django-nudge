@@ -19,7 +19,7 @@ commands received from nudge client
     
 def valid_batch(batch_info):
     """returns whether a batch format is valid"""
-    is_valid = ('id' in batch_info) and ('title' in batch_info) and ('items' in batch_info)
+    is_valid = ('items' in batch_info)
     return is_valid
     
 def decrypt(key, ciphertext, iv):
@@ -45,7 +45,8 @@ def process_batch(key, batch_info, iv):
             if type(item.object) == Version:
                 version=item.object
 		if version.type == 2:
-                    version.object.delete()
+                    if version.object:
+                        version.object.delete()
 		else:
                     item.object.revert()
 
