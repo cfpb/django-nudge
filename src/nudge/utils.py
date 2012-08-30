@@ -1,11 +1,12 @@
 import hashlib, os
 from django.db.models.fields.related import ReverseSingleRelatedObjectDescriptor, SingleRelatedObjectDescriptor, ForeignRelatedObjectsDescriptor
 from django.contrib.contenttypes.models import ContentType
-from nudge.models import Batch, BatchItem
+from nudge.models import Batch, BatchPushItem, version_type_map
 from reversion.models import Version, Revision
 from reversion import get_for_object
 
 from django.conf import settings
+
 
 
 class PotentialBatchItem(object):
@@ -27,8 +28,20 @@ class PotentialBatchItem(object):
         def key(self):
             return '~'.join([self.content_type.app_label,self.content_type.model, self.pk])
 
+        def version_type_string(self):
+            return version_type_map[self.version.type]
 
 
+def inflate_batch_item(key, batch):
+    app_label, model_label, pk= key.split('~')
+    content_type=ContentType.objects.get_by_natural_key(app_label, model_label)
+    latest_version=Version.objects.filter(content_type=content_type).filter(object_id=pk).order_by('-revision__date_created')[0]
+
+    
+    return BatchPushItem(batch=batch, version=latest_version)
+
+   
+        
 
 
 def related_objects(obj):
@@ -58,10 +71,22 @@ def changed_items(for_date, batch=None):
     
 
 
-    eligible_versions=Version.objects.all().filter(revision__date_created__gte=for_date).filter(content_type__in=types).order_by('-revision__date_created')
+    eligible_versions=Version.objects.all().filter(revision__date_created__gte=for_date).filter(content_type__in=types).order_by('-revision__date_created').distinct(['content_type_id','object_id'])
     
+    pot_batch_items=[PotentialBatchItem(version, batch=batch) for version in eligible_versions]
+ 
+    seen_pbis=[]
 
-    return set([PotentialBatchItem(version, batch=batch) for version in eligible_versions])
+    def seen(key):
+        if key not in seen_pbis:
+            seen_pbis.append(key)
+            return True
+        else:
+            return False
+
+    
+    pot_batch_items=filter(seen,pot_batch_items)
+    return set(pot_batch_items)
 
 def add_versions_to_batch(batch, versions):
     """takes a list of Version obects, and adds them to the given Batch"""

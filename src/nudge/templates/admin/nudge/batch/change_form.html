@@ -35,7 +35,7 @@
 {% endif %}{% endif %}
 {% endblock %}
 
-{% if editable %}
+
 
 <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.module_name }}_form">{% csrf_token %}{% block form_top %}{% endblock %}
 <div>
@@ -77,17 +77,26 @@
 {% if available_changes %}
 <h2> Available Changes</h2>
 	
-{% for content_type, items in available_changes %}
+{% regroup available_changes by content_type as changes_by_ct %}
 
-<h3>{{ content_type.name }} ({{content_type.app_label}})</h3>
+{% for ct in changes_by_ct %}
 
-<ul>
-{% for item in items %}
+<h3>{{ ct.grouper.name }} ({{ct.grouper.app_label}})</h3>
 
-<li><input type="checkbox" name="changes_in_batch" value="{{item.key}}" {% if item.selected %}checked='yes'{% endif %} /> {{item}}</li>
+<table>
+<tr><th/><th>Item Name</th>   <th>Revision Type</th> <th>Date</th></tr>
+{% for change in ct.list %}
+
+<tr>
+<td><input type="checkbox" name="changes_in_batch" value="{{change.key}}" {% if change.selected %}checked='yes'{% endif %} /></td>
+<td> {{change}}</td>
+<td> {{change.version_type_string}} </td>
+   <td>{{change.version.revision.date_created }}</td>
+
+</tr>
 {% endfor %}
 
-</ul>
+</table>
 
 {% endfor %}
 
@@ -124,9 +133,6 @@ django.jQuery(function(){
 })
 
 </script>
-{% else %}
-{% include "admin/nudge/batch/read_only.html" %}
 
-{% endif %}
 
 {% endblock %}

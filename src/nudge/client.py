@@ -4,11 +4,11 @@ from urlparse import urljoin
 from Crypto.Cipher import AES
 
 from django.core import serializers
-
-from nudge.models import Batch, BatchItem, PushHistoryItem
+from django.db import models
+from nudge.models import Batch, BatchPushItem, PushHistoryItem
 from nudge.exceptions import *
 from utils import related_objects
-
+from reversion import get_for_object
 from django.conf import settings
 
 """
@@ -31,15 +31,25 @@ def encrypt_batch(key, b_plaintext):
     encrypted, iv= encrypt(key, b_plaintext)
     return { 'batch': encrypted , 'iv':iv.encode('hex') }
 
-def serialize_batch(key, batch):
+def serialize_objects(key, batch_push_items):
     """
     returns urlecncoded pickled serialization of a batch ready to be sent to 
     server.
     """
-    import pdb;pdb.set_trace()
-    batch_items = BatchItem.objects.filter(batch=batch)
-    batch_items_serialized = serializers.serialize("json", [batch_item.version for batch_item in batch_items])
-    b_plaintext = pickle.dumps({ 'id':batch.id, 'title':batch.title, 'items':batch_items_serialized })
+    batch_versions = [batch_item.version for batch_item in batch_push_items]
+    related_objects=[]
+    for version in batch_versions:
+        if version.object:
+            for related_object in [getattr(version.object, f.name) for f in version.object._meta.fields if type(f) == models.fields.related.ForeignKey]:
+                versions=get_for_object(related_object)
+                if versions and versions[0] not in related_objects:
+                    related_objects.append(versions[0])
+ 
+                else:
+                    related_objects.append(related_object)
+
+    batch_items_serialized = serializers.serialize("json", related_objects+batch_versions)
+    b_plaintext = pickle.dumps({ 'items':batch_items_serialized })
     
     return encrypt_batch(key, b_plaintext)
     
@@ -59,24 +69,33 @@ def send_command(target, data):
 
     return response
 
+
+def push_one(batch_push_item):
+    key = settings.NUDGE_KEY.decode('hex')
+    if batch_push_item.last_tried and batch_push_item.success:
+        return 200
+    batch_push_item.last_tried = datetime.datetime.now()
+    response= send_command('batch/', serialize_objects(key,[batch_push_item]))
+
+    if response.getcode() == 200:
+        batch_push_item.success=True
+
+    batch_push_item.save()
+    return response.getcode()
+    
+
 def push_batch(batch):
     """
     pushes batch to server, logs push and timestamps on success
     """
-    log=PushHistoryItem(batch=batch)
-    log.save()
-    key = settings.NUDGE_KEY.decode('hex')
-    try:
-        
-        response= send_command('batch/', serialize_batch(key,batch))
-        batch.pushed = datetime.datetime.now()
-        batch.save()
-        log.http_result=response.getcode()
-        log.save()
-        if log.http_result != 200:
-            raise BatchPushFailure(http_status=response.getcode())
-    except:
-        raise BatchPushFailure
+
+    
+    batch_push_items=BatchPushItem.objects.filter(batch=batch)
+    if not batch.first_push_attempt:
+        batch.first_push_attempt = datetime.datetime.now()
+    for batch_push_item in batch_push_items:
+        push_one(batch_push_item)
+    batch.save()
         
 def push_test_batch():
     """
