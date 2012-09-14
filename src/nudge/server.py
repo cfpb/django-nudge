@@ -7,10 +7,10 @@ from django.db import models
 from django.utils import importlib
 from utils import convert_keys_to_string, caster
 
-from nudge.models import Setting
-
 from django.contrib.contenttypes.models import ContentType
 from reversion.models import Version
+
+from nudge.models import version_type_map
 
 """
 server.py 
@@ -21,7 +21,7 @@ commands received from nudge client
     
 def valid_batch(batch_info):
     """returns whether a batch format is valid"""
-    is_valid = ('id' in batch_info) and ('title' in batch_info) and ('items' in batch_info)
+    is_valid = ('items' in batch_info)
     return is_valid
     
 def decrypt(key, ciphertext, iv):
@@ -30,6 +30,23 @@ def decrypt(key, ciphertext, iv):
     decobj = AES.new(key, AES.MODE_CBC, iv)
     plaintext = decobj.decrypt(ciphertext)
     return plaintext
+
+def versions(keys):
+    results={}
+    for key in keys:
+        app, model, pk=key.split('~')
+        content_type=ContentType.objects.get_by_natural_key(app,model)
+        versions=Version.objects.all().filter(content_type=content_type).filter(object_id=pk).order_by('-revision__date_created')
+
+        if versions:
+            latest=versions[0]
+            results[key]= (latest.pk,latest.type, latest.revision.date_created.strftime('%b %d, %Y, %I:%M %p'))
+
+        else:
+            results[key]=None
+ 
+    
+    return json.dumps(results)
     
 def process_batch(key, batch_info, iv):
     """
@@ -47,7 +64,8 @@ def process_batch(key, batch_info, iv):
             if type(item.object) == Version:
                 version=item.object
 		if version.type == 2:
-                    version.object.delete()
+                    if version.object:
+                        version.object.delete()
 		else:
                     item.object.revert()
 

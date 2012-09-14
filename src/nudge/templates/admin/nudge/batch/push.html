@@ -1,0 +1,150 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_modify adminmedia nudge_admin_helpers version_display %}
+{% load url from future %}
+
+{% block extrahead %}{{ block.super }}
+{% url 'admin:jsi18n' as jsi18nurl %}
+<script type="text/javascript" src="{{ jsi18nurl|default:"../../../jsi18n/" }}"></script>
+{{ media }}
+{% endblock %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% admin_media_prefix %}css/forms.css" />{% endblock %}
+
+{% block coltype %}{% if ordered_objects %}colMS{% else %}colM{% endif %}{% endblock %}
+
+{% block bodyclass %}{{ opts.app_label }}-{{ opts.object_name.lower }} change-form{% endblock %}
+
+{% block breadcrumbs %}{% if not is_popup %}
+<div class="breadcrumbs">
+     <a href="../../../">{% trans "Home" %}</a> &rsaquo;
+     <a href="../../">Nudge</a> &rsaquo;
+     <a href="../">Batch</a> &rsaquo; Push
+     
+</div>
+{% endif %}{% endblock %}
+
+{% block content %}<div id="content-main">
+{% block object-tools %}
+{% if change %}{% if not is_popup %}
+  <ul class="object-tools">
+    {% block object-tools-items %}
+    <li><a href="history/" class="historylink">{% trans "History" %}</a></li>
+    {% if has_absolute_url %}<li><a href="../../../r/{{ content_type_id }}/{{ object_id }}/" class="viewsitelink">{% trans "View on site" %}</a></li>{% endif%}
+    {% endblock %}
+  </ul>
+{% endif %}{% endif %}
+
+
+
+<h1>Batch Contents</h1>
+
+{% if batch_push_items %} 
+{% regroup batch_push_items by version.content_type as ct_list %}
+
+{% for ct in ct_list %}
+
+<h3>{{ ct.grouper.name}} ({{ct.grouper.app_label}})</h3>
+<table id="changes">
+<tr><th>Item Name</th>   <th>Revision Type</th> <th>Date</th> <th>status</th></tr>
+{% for batch_item in ct.list %}
+
+{% include "admin/nudge/batch/_batch_item_row.html" %}
+
+{% endfor %}
+</table>
+{% endfor %}
+<div id="push-buttons"> <form method='POST'>
+
+<input type="submit" value="Push Now" name="push_now"/> 
+{% csrf_token %}
+</form>
+</div>
+{% else %}
+
+<p>No changes in this batch!</p>
+
+{% endif %}
+{% endblock %}
+
+
+
+
+</div>
+</form></div>
+
+<script>
+
+
+django.jQuery(document).ajaxSend(function(event, xhr, settings) {
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = django.jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    function sameOrigin(url) {
+        // url could be relative or scheme relative or absolute
+        var host = document.location.host; // host + port
+        var protocol = document.location.protocol;
+        var sr_origin = '//' + host;
+        var origin = protocol + sr_origin;
+        // Allow absolute or scheme relative URLs to same origin
+        return (url == origin || url.slice(0, origin.length + 1) == origin + '/') ||
+            (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
+            // or any other URL that isn't scheme relative or absolute i.e relative.
+            !(/^(\/\/|http:|https:).*/.test(url));
+    }
+    function safeMethod(method) {
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+
+    if (!safeMethod(settings.type) && sameOrigin(settings.url)) {
+        xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+    }
+});
+
+scrub_buttons=function(){
+if (django.jQuery('tr.push-pending').length == 0){
+            django.jQuery("input[name=push_now]").remove()
+          }
+
+if (django.jQuery('tr.push-pending').length == 0){
+            django.jQuery("input[name=push_now]").remove()
+          }
+
+}
+django.jQuery(function(){
+        scrub_buttons();
+	django.jQuery("input[name=push_now]").click(function(){
+          django.jQuery(".push-pending").each(function(index){
+              var this_tr=django.jQuery(this)
+              var pk=this_tr.attr('id').split('.')[1];
+              django.jQuery.ajax({
+              'url': document.location.pathname,
+              'type':'POST',
+              'data': {'push-batch-item': pk},
+              'success': function(data){
+                 this_tr.replaceWith(data);
+                 scrub_buttons();
+              }
+              });
+             
+           });
+        return false;
+        });
+	
+});
+
+</script>
+
+
+{% endblock %}

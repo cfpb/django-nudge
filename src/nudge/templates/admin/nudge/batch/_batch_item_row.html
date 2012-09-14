@@ -1,0 +1,9 @@
+<tr id="batch_item.{{batch_item.pk}}" {% if not batch_item.success %}class="push-pending"{% endif %}> <td>{{ batch_item }}</td> <td> {{batch_item.version_type_string}}</td>
+   <td>{{batch_item.version.revision.date_created }}</td>
+   <td>{% if not batch_item.last_tried %} Ready to push {% else %}
+       {% if batch_item.success %} Pushed at {% else %} push failed at {% endif %}
+       {{ batch_item.last_tried }}
+       {% endif %}
+   </td> 
+  
+</tr>

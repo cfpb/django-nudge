@@ -35,7 +35,7 @@
 {% endif %}{% endif %}
 {% endblock %}
 
-{% if editable %}
+
 
 <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.module_name }}_form">{% csrf_token %}{% block form_top %}{% endblock %}
 <div>
@@ -77,33 +77,35 @@
 {% if available_changes %}
 <h2> Available Changes</h2>
 	
-{% regroup available_changes by content_type as typed_changes_list %}
-	
+{% regroup available_changes by content_type as changes_by_ct %}
+
+{% for ct in changes_by_ct %}
+
+<h3>{{ ct.grouper.name }} ({{ct.grouper.app_label}})</h3>
+
 <table>
-	<tr>
-		{% for type in typed_changes_list %}
-			<th>	{{type.grouper.name|capfirst}} </th>
-		{% endfor %}
-	
-	</tr>
+<tr><th/><th>Item Name</th>   <th>Revision Type</th> <th>Date</th><th>Remote updated</th></tr>
+{% for change in ct.list %}
+
 <tr>
-	{% for type in typed_changes_list %}
-
-	<td>
-		<a class='selectall' href="#">select all</a> 
-		 <ul>{% for version in type.list %}
-
-		<li><input type="checkbox" name="changes_in_batch" value="{{version.id}}" class="{{type.grouper.name}}_version"/>  {{version.object_repr}} ({{version.type|change_type}})</li>
-
-{% endfor %} </ul>
-
+<td><input type="checkbox" name="changes_in_batch" value="{{change.key}}" {% if change.selected %}checked='yes'{% endif %} /></td>
+<td> {{change}}</td>
+<td> {{change.version_type_string}} </td>
+   <td>{{change.version.revision.date_created }}</td>
+ <td>{% if change.remote_timestamp %} {{change.remote_timestamp}} ({{change.remote_change_type}}) 
+   {% else %} New {% endif %}
  </td>
+</tr>
+{% endfor %}
 
-
+</table>
 
 {% endfor %}
-</tr>
-</table>
+
+
+
+
+
 {% endif %}
 {% submit_batch_row %}
 {% for history_item in history %}
@@ -133,9 +135,6 @@ django.jQuery(function(){
 })
 
 </script>
-{% else %}
-{% include "admin/nudge/batch/read_only.html" %}
 
-{% endif %}
 
 {% endblock %}
