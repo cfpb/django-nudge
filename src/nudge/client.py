@@ -36,6 +36,7 @@ def serialize_objects(key, batch_push_items):
     returns urlecncoded pickled serialization of a batch ready to be sent to 
     server.
     """
+
     batch_versions = [batch_item.version for batch_item in batch_push_items]
     revisions=[]
     related_objects=[]
@@ -43,13 +44,17 @@ def serialize_objects(key, batch_push_items):
         if version.revision not in revisions:
             revisions.append(version.revision)
         if version.object:
-            for related_object in [getattr(version.object, f.name) for f in version.object._meta.fields if type(f) == models.fields.related.ForeignKey]:
-                versions=get_for_object(related_object)
-                if versions and versions[0] not in related_objects:
-                    related_objects.append(versions[0])
- 
-                else:
-                    related_objects.append(related_object)
+            foreign_key_fields= [f for f in version.object._meta.fields if type(f) == models.fields.related.ForeignKey]
+            many_to_many_fields= version.object._meta.many_to_many
+
+            for related_object in [getattr(version.object, f.name) for f in foreign_key_fields]:
+                if related_object:
+                    versions=get_for_object(related_object)
+                    if versions and versions[0] not in related_objects:
+                        related_objects.append(versions[0])
+     
+                    else:
+                        related_objects.append(related_object)
 
     batch_items_serialized = serializers.serialize("json", revisions+related_objects+batch_versions)
     b_plaintext = pickle.dumps({ 'items':batch_items_serialized })
