@@ -13,7 +13,7 @@ except ImportError:
 
 
 setup(name="django-nudge",
-      version="0.5.3",
+      version="0.8",
       description="Use Nudge to (gently) push content between Django servers",
       author="Joshua Ruihley, Ross Karchner",
       author_email="joshua.ruihley@cfpb.gov",

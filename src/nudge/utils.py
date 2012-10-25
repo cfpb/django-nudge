@@ -18,7 +18,6 @@ class PotentialBatchItem(object):
             self.version=version
             if batch:
                 self.selected=self.key() in batch.selected_items
-
 	
         def __eq__(self, other):
             return (self.content_type==other.content_type and self.pk==other.pk)
@@ -104,7 +103,7 @@ def changed_items(for_date, batch=None):
         else:
             screened_pbis.append(pbi)
 
-    return screened_pbis
+    return sorted(screened_pbis, key=lambda pbi: pbi.content_type)
 
 def add_versions_to_batch(batch, versions):
     """takes a list of Version obects, and adds them to the given Batch"""

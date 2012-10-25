@@ -1,6 +1,6 @@
 import datetime, hashlib, json, os, pickle, urllib, urllib2
 from urlparse import urljoin
-
+from itertools import chain
 from Crypto.Cipher import AES
 
 from django.core import serializers
@@ -45,8 +45,8 @@ def serialize_objects(key, batch_push_items):
             revisions.append(version.revision)
         if version.object:
             foreign_key_fields= [f for f in version.object._meta.fields if type(f) == models.fields.related.ForeignKey]
-            many_to_many_fields= version.object._meta.many_to_many
-
+            many_to_many_field_names= [field.name for field in version.object._meta.many_to_many]
+            through_field_names=[rel.get_accessor_name() for rel in version.object._meta.get_all_related_objects()]
             for related_object in [getattr(version.object, f.name) for f in foreign_key_fields]:
                 if related_object:
                     versions=get_for_object(related_object)
@@ -55,7 +55,11 @@ def serialize_objects(key, batch_push_items):
      
                     else:
                         related_objects.append(related_object)
-
+            for manager_name in chain(many_to_many_field_names, through_field_names):
+                manager=getattr(version.object, manager_name)
+                for obj in manager.all():
+                    if obj not in related_objects:
+                        related_objects.append(obj)
     batch_items_serialized = serializers.serialize("json", revisions+related_objects+batch_versions)
     b_plaintext = pickle.dumps({ 'items':batch_items_serialized })
     
