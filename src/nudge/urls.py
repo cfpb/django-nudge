@@ -1,5 +1,6 @@
 from django.conf.urls.defaults import *
 
-urlpatterns = patterns('',
-    url(r'^batch/$', 'nudge.views.batch'),
+urlpatterns = patterns('nudge.views',
+    url(r'^batch/$', 'batch'),
+    url(r'^check-versions/$', 'check_versions'),
 )

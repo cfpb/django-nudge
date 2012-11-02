@@ -1,37 +1,60 @@
 from django.db import models
-from reversion.models import Version
+from django.contrib.contenttypes.models import ContentType
+from reversion.models import Version, VERSION_TYPE_CHOICES
+
+import json
+
+from datetime import date
 
 from exceptions import *
     
-class Setting(models.Model):
-    local_key = models.CharField("Secret",max_length=255, null=True, blank=True, help_text="This is the key your client will need to push changes to this server.")
-    remote_address = models.CharField("Server to push changes to", max_length=255, null=True, blank=True, help_text="This will be blank on your production server")
-    remote_key = models.CharField(max_length=255, null=True, blank=True, help_text="This is the 'secret' displayed in the Nudge settings displayed on your production server")
-        
+version_type_map=dict(VERSION_TYPE_CHOICES)
+
+class BatchPushItem(models.Model):
+    batch=models.ForeignKey('Batch')
+    version=models.ForeignKey(Version)
+    last_tried=models.DateTimeField(null=True)
+    success=models.BooleanField(default=False)
+
+    def __unicode__(self):
+        return unicode(self.version)
+
+    def version_type_string(self):
+        return version_type_map[self.version.type]
+
+
+def default_batch_start_date():
+    # date last completed batch pushed
+    # or date of earliest revision
+    # or today
+
+    return date.today()
+
+
 class Batch(models.Model):
-    title = models.TextField(max_length=255)
+    title = models.CharField(max_length=1000)
+    description=models.TextField(blank=True)
+    start_date=models.DateField(default=default_batch_start_date)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-    pushed = models.DateTimeField(null=True, blank=True)
+    preflight = models.DateTimeField(null=True, blank=True)
+    first_push_attempt = models.DateTimeField(null=True, blank=True)
+    selected_items_packed= models.TextField(default=json.dumps([]))
     
     def __unicode__(self):
         return u'%s' % self.title
     
     def is_valid(self, test_only=True):
-        for batchitem in self.batchitem_set.all():
-             valid=True
-             other_batches=batchitem.version.batchitem_set.exclude(batch=self)
-             if other_batches.count() > 0: 
-                 if test_only:
-                     valid=False
-                 else:
-                     raise BatchValidationError(self)
-                
-
-             return valid
+         return True
              
                  
-    
+    @property
+    def selected_items(self):
+       
+       if not hasattr(self, '_selected_items'):
+           self._selected_items=json.loads(self.selected_items_packed)
+       return self._selected_items
+        
     
     class Meta:
         verbose_name_plural = "batches"
