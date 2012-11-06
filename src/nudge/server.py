@@ -8,7 +8,7 @@ from django.utils import importlib
 from utils import convert_keys_to_string, caster
 
 from django.contrib.contenttypes.models import ContentType
-from reversion.models import Version
+from reversion.models import Version, VERSION_DELETE
 
 from nudge.models import version_type_map
 
@@ -47,26 +47,21 @@ def versions(keys):
  
     
     return json.dumps(results)
-    
-def process_batch(key, batch_info, iv):
-    """
-    loops through items in a batch and processes them
-    """
-    
-    batch_info = pickle.loads(decrypt(key, batch_info, iv.decode('hex')))
 
+
+def process_batch(key, batch_info, iv):
+    """Loops through items in a batch and processes them."""
+    batch_info = pickle.loads(decrypt(key, batch_info, iv.decode('hex')))
     if valid_batch(batch_info):
-        items = serializers.deserialize("json", batch_info['items'])
+        items = serializers.deserialize('json', batch_info['items'])
         success = True
-        
         for item in items:
             item.save()
-            if type(item.object) == Version:
-                version=item.object
-		if version.type == 2:
+            if isinstance(Version, item.object):
+                version = item.object
+                if version.type == VERSION_DELETE:
                     if version.object:
                         version.object.delete()
-		else:
+                else:
                     item.object.revert()
-
     return success

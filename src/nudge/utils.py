@@ -2,7 +2,7 @@ import hashlib, os, json
 from django.db.models.fields.related import ReverseSingleRelatedObjectDescriptor, SingleRelatedObjectDescriptor, ForeignRelatedObjectsDescriptor
 from django.contrib.contenttypes.models import ContentType
 from nudge.models import Batch, BatchPushItem, version_type_map
-
+from nudge.exceptions import CommandException
 from reversion.models import Version, Revision
 from reversion import get_for_object
 
@@ -65,25 +65,38 @@ def caster(fields, model):
 def changed_items(for_date, batch=None):
     """return list of objects that are new or changed and not pushed"""
     from nudge.client import send_command
-    types=[]
+    types = []
     for type_key in settings.NUDGE_SELECTIVE:
-       app, model = type_key.split('.')
-       types.append(ContentType.objects.get_by_natural_key(app,model))
-    
+        app, model = type_key.lower().split('.')
+        try:
+            types.append(ContentType.objects.get_by_natural_key(app, model))
+        except ContentType.DoesNotExist:
+            raise ValueError(
+                'Model listed in NUDGE_SELECTIVE does not exist: %s.%s' %
+                  (app, model))
 
-
-    eligible_versions=Version.objects.all().filter(revision__date_created__gte=for_date).filter(content_type__in=types).order_by('-revision__date_created')
+    eligible_versions = Version.objects.all().filter(
+        revision__date_created__gte=for_date,
+        content_type__in=types
+      ).order_by('-revision__date_created')
     
-    pot_batch_items=[PotentialBatchItem(version, batch=batch) for version in eligible_versions]
- 
-    seen_pbis=[]
-    keys=[pbi.key() for pbi in pot_batch_items]
-    remote_versions_str= send_command('check-versions/', {'keys':json.dumps(keys)}).read()
-    remote_versions=json.loads(remote_versions_str)
+    pot_batch_items = [PotentialBatchItem(version, batch=batch)
+                        for version in eligible_versions]
+
+    seen_pbis = []
+    keys = [pbi.key() for pbi in pot_batch_items]
+    response = send_command('check-versions/', {
+        'keys': json.dumps(keys)}
+      ).read()
+    try:
+        remote_versions = json.loads(response)
+    except ValueError, e:
+        raise CommandException(
+          'Error decoding \'check-versions\' response: %s' % e, e)
    
     def seen(key):
         if key not in seen_pbis:
-            
+
             seen_pbis.append(key)
             return True
         else:

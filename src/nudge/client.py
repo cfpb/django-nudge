@@ -70,16 +70,15 @@ def serialize_objects(key, batch_push_items):
 
 
 def send_command(target, data):
-    """
-    sends a nudge api command
-    """
-    url= urljoin(settings.NUDGE_REMOTE_ADDRESS, target)
-
+    """sends a nudge api command"""
+    url = urljoin(settings.NUDGE_REMOTE_ADDRESS, target)
     req = urllib2.Request(url, urllib.urlencode(data))
-
-    response = urllib2.urlopen(req)
-
-    return response
+    try:
+        return urllib2.urlopen(req)
+    except urllib2.HTTPError, e:
+        raise CommandException(
+          'An exception occurred while contacting %s: %s' %
+            (url, e), e)
 
 
 def push_one(batch_push_item):
@@ -87,11 +86,13 @@ def push_one(batch_push_item):
     if batch_push_item.last_tried and batch_push_item.success:
         return 200
     batch_push_item.last_tried = datetime.datetime.now()
-    response= send_command('batch/', serialize_objects(key,[batch_push_item]))
-
-    if response.getcode() == 200:
-        batch_push_item.success=True
-
+    try:
+        response = send_command(
+          'batch/', serialize_objects(key, [batch_push_item]))
+        if response.getcode() == 200:
+            batch_push_item.success=True
+    except CommandException, e:
+        response = e.orig_exception
     batch_push_item.save()
     return response.getcode()
     
