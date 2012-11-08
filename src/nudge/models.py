@@ -1,6 +1,5 @@
 from datetime import date
 from django.db import models
-from nudge.utils import VERSION_TYPE_LOOKUP
 
 try:
     import simplejson as json
@@ -70,3 +69,6 @@ class BatchItem(models.Model):
 
     def __unicode__(self):
         return u'%s' % self.version.object_repr
+
+
+from nudge.utils import VERSION_TYPE_LOOKUP

@@ -5,7 +5,6 @@ from django.db.models.fields.related import (
     ForeignRelatedObjectsDescriptor)
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from nudge.client import send_command
 from nudge.models import BatchPushItem, BatchItem
 from reversion.models import Version, VERSION_TYPE_CHOICES
 
@@ -83,6 +82,7 @@ def caster(fields, model):
 
 def changed_items(for_date, batch=None):
     """Returns a list of objects that are new or changed and not pushed"""
+    from nudge.client import send_command
     types = []
     for type_key in settings.NUDGE_SELECTIVE:
         app, model = type_key.split('.')
