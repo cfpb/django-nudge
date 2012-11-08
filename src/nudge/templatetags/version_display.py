@@ -1,10 +1,9 @@
 from django import template
+from nudge.utils import VERSION_TYPE_LOOKUP
+
 register = template.Library()
 
-from reversion.models import VERSION_TYPE_CHOICES
 
-VERSION_TYPE_LOOKUP=dict(VERSION_TYPE_CHOICES)
-
-@register.filter(name='change_type')
+@register.filter
 def change_type(value):
     return VERSION_TYPE_LOOKUP[int(value)]
