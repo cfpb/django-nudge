@@ -1,18 +1,17 @@
 from distutils.core import setup
 
-
 # Load in babel support, if available.
 try:
     from babel.messages import frontend as babel
     cmdclass = {"compile_catalog": babel.compile_catalog,
                 "extract_messages": babel.extract_messages,
                 "init_catalog": babel.init_catalog,
-                "update_catalog": babel.update_catalog,}
+                "update_catalog": babel.update_catalog, }
 except ImportError:
     cmdclass = {}
 
-
 setup(name="django-nudge",
+<<<<<<< HEAD
       version="0.8",
       description="Use Nudge to (gently) push content between Django servers",
       author="Joshua Ruihley, Ross Karchner",
