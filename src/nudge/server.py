@@ -5,7 +5,6 @@ import binascii
 import pickle
 from Crypto.Cipher import AES
 from django.contrib.contenttypes.models import ContentType
-from django.core import serializers
 from reversion.models import Version, VERSION_DELETE
 
 try:
@@ -47,14 +46,14 @@ def versions(keys):
 
 
 def process_batch(key, batch_info, iv):
-    """Loop through items in a batch and process them"""
+    """Loops through items in a batch and processes them."""
     batch_info = pickle.loads(decrypt(key, batch_info, iv.decode('hex')))
     if valid_batch(batch_info):
         items = serializers.deserialize('json', batch_info['items'])
         success = True
         for item in items:
             item.save()
-            if isinstance(item.object, Version):
+            if isinstance(Version, item.object):
                 version = item.object
                 if version.type == VERSION_DELETE:
                     if version.object:
