@@ -16,6 +16,7 @@ from itertools import chain
 from reversion import get_for_object
 from urlparse import urljoin
 
+from .exceptions import CommandException
 
 def encrypt(key, plaintext):
     m = hashlib.md5(os.urandom(16))

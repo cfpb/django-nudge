@@ -65,9 +65,14 @@ class BatchAdmin(admin.ModelAdmin):
                 form_validated = False
                 new_object = obj
             prefixes = {}
+            if hasattr(self, 'inline_instances'):
+                inline_instances = self.inline_instances
+
+            else:
+                inline_instances = []
 
             zipped_formsets = zip(self.get_formsets(request, new_object),
-                                  self.inline_instances)
+                                  inline_instances)
             for FormSet, inline in zipped_formsets:
                 prefix = FormSet.get_default_prefix()
                 prefixes[prefix] = prefixes.get(prefix, 0) + 1

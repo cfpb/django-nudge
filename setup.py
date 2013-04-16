@@ -11,7 +11,7 @@ except ImportError:
     cmdclass = {}
 
 setup(name="django-nudge",
-      version="0.8.2",
+      version="0.8.3",
       description="Use Nudge to (gently) push content between Django servers",
       author="Joshua Ruihley, Ross Karchner",
       author_email="joshua.ruihley@cfpb.gov",

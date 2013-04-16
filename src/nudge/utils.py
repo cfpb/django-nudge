@@ -5,9 +5,9 @@ from django.db.models.fields.related import (
     ForeignRelatedObjectsDescriptor)
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from nudge.models import Batch, BatchPushItem, version_type_map
+from nudge.models import Batch, BatchPushItem
 from nudge.exceptions import CommandException
-from reversion.models import Version, Revision
+from reversion.models import Version, Revision, VERSION_TYPE_CHOICES
 from reversion import get_for_object
 
 try:
