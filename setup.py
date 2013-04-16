@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 # Load in babel support, if available.
 try:
@@ -11,12 +11,11 @@ except ImportError:
     cmdclass = {}
 
 setup(name="django-nudge",
-      version="0.8",
+      version="0.8.2",
       description="Use Nudge to (gently) push content between Django servers",
       author="Joshua Ruihley, Ross Karchner",
       author_email="joshua.ruihley@cfpb.gov",
-      url="https://github.com/jroo/django-nudge",
-      download_url="https://github.com/downloads/cfpb/django-nudge/django-nudge-0.8.tar.gz",
+      url="https://github.com/CFPB/django-nudge",
       zip_safe=False,
       packages=["nudge", "nudge.demo", "nudge.management", "nudge.templatetags", "nudge.management.commands"],
       package_data = {"nudge": ["templates/*.html",
