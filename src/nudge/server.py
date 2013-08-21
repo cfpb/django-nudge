@@ -5,7 +5,9 @@ import binascii
 import pickle
 from Crypto.Cipher import AES
 from django.contrib.contenttypes.models import ContentType
+from django.core import serializers
 from reversion.models import Version, VERSION_DELETE
+
 
 try:
     import simplejson as json
