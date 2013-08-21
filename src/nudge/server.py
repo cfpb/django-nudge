@@ -55,7 +55,7 @@ def process_batch(key, batch_info, iv):
         success = True
         for item in items:
             item.save()
-            if isinstance(Version, item.object):
+            if isinstance(item.object, Version):
                 version = item.object
                 if version.type == VERSION_DELETE:
                     if version.object:
