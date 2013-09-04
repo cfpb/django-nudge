@@ -6,7 +6,8 @@ import pickle
 from Crypto.Cipher import AES
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
-from reversion.models import Version, VERSION_DELETE
+import reversion
+from reversion.models import Version
 
 
 try:
@@ -15,9 +16,6 @@ except ImportError:
     import json
 
 
-def valid_batch(batch_info):
-    """Returns whether a batch format is valid"""
-    return 'items' in batch_info
 
 
 def decrypt(key, ciphertext, iv):
@@ -50,16 +48,27 @@ def versions(keys):
 def process_batch(key, batch_info, iv):
     """Loops through items in a batch and processes them."""
     batch_info = pickle.loads(decrypt(key, batch_info, iv.decode('hex')))
-    if valid_batch(batch_info):
-        items = serializers.deserialize('json', batch_info['items'])
-        success = True
-        for item in items:
-            item.save()
-            if isinstance(item.object, Version):
-                version = item.object
-                if version.type == VERSION_DELETE:
-                    if version.object:
-                        version.object.delete()
-                else:
-                    item.object.revert()
+    success = True
+
+
+    if 'dependencies' in batch_info:
+        dependencies = serializers.deserialize('json', batch_info['dependencies'])
+        for dep in dependencies:
+            dep.save()
+
+    if 'update' in batch_info:
+        updates = serializers.deserialize('json', batch_info['update'])
+        for item in updates:
+            with reversion.create_revision():
+                item.save()
+
+    if 'deletions' in batch_info:
+        deletions = json.loads(batch_info['deletions'])
+        for deletion in deletions:
+            app_label, model_label, object_id = deletion
+            ct = ContentType.objects.get_by_natural_key(app_label, model_label)
+            for result in ct.model_class().objects.filter(pk=object_id):
+                with reversion.create_revision():
+                    result.delete()
+                    
     return success

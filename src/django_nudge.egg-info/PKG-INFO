@@ -1,0 +1,17 @@
+Metadata-Version: 1.1
+Name: django-nudge
+Version: 0.9.0
+Summary: Use Nudge to (gently) push content between Django servers
+Home-page: https://github.com/CFPB/django-nudge
+Author: Joshua Ruihley, Ross Karchner
+Author-email: joshua.ruihley@cfpb.gov
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: License :: Public Domain
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Framework :: Django

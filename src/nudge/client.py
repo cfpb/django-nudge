@@ -7,16 +7,30 @@ import os
 import pickle
 import urllib
 import urllib2
+import json
 from Crypto.Cipher import AES
+
 from django.conf import settings
 from django.core import serializers
 from django.db import models
+from django.contrib.contenttypes.models import ContentType
+
 from nudge.models import Batch, BatchPushItem
 from itertools import chain
 from reversion import get_for_object
 from urlparse import urljoin
 
 from .exceptions import CommandException
+
+from django.conf import settings
+
+IGNORE_RELATIONSHIPS = []
+
+if hasattr(settings, 'NUDGE_IGNORE_RELATIONSHIPS'):
+    for model_reference in settings.NUDGE_IGNORE_RELATIONSHIPS:
+        app_label, model_label = model_reference.split('.')
+        ct = ContentType.objects.get_by_natural_key(app_label, model_label)
+        IGNORE_RELATIONSHIPS.append(ct.model_class())
 
 def encrypt(key, plaintext):
     m = hashlib.md5(os.urandom(16))
@@ -37,35 +51,43 @@ def serialize_objects(key, batch_push_items):
     Returns an urlencoded pickled serialization of a batch ready to be sent
     to a nudge server.
     """
-    batch_versions = [batch_item.version for batch_item in batch_push_items]
-    revisions = []
-    related_objects = []
-    for version in batch_versions:
-        if version.revision not in revisions:
-            revisions.append(version.revision)
-        if version.object:
-            options = version.object._meta
+    batch_objects = []
+    dependencies = [] 
+    deletions = []
+
+    for batch_item in batch_push_items:
+        version = batch_item.version
+        if version.type < 2 and version.object:
+            updated_obj=version.object
+            batch_objects.append(updated_obj)
+            options = updated_obj._meta
             fk_fields = [f for f in options.fields if
                          isinstance(f, models.ForeignKey)]
             m2m_fields = [field.name for field in options.many_to_many]
             through_fields = [rel.get_accessor_name() for rel in
                               options.get_all_related_objects()]
-            for rel in [getattr(version.object, f.name) for f in fk_fields]:
-                if rel:
-                    versions = get_for_object(rel)
-                    if versions and versions[0] not in related_objects:
-                        related_objects.append(versions[0])
-                    else:
-                        related_objects.append(rel)
+            for related_obj in [getattr(updated_obj, f.name) for f in fk_fields]:
+                if related_obj and related_obj not in dependencies and type(related_obj) not in IGNORE_RELATIONSHIPS:
+                    dependencies.append(related_obj)
+
             for manager_name in chain(m2m_fields, through_fields):
-                manager = getattr(version.object, manager_name)
-                for obj in manager.all():
-                    if obj not in related_objects:
-                        related_objects.append(obj)
-    batch_items_serialized = serializers.serialize('json', (revisions +
-                                                            related_objects +
-                                                            batch_versions))
-    b_plaintext = pickle.dumps({'items': batch_items_serialized})
+                manager = getattr(updated_obj, manager_name)
+                for related_obj in manager.all():
+                    if related_obj and related_obj not in dependencies and type(related_obj) not in IGNORE_RELATIONSHIPS:
+                        dependencies.append(related_obj)
+
+        else:
+            app_label = batch_item.version.content_type.app_label
+            model_label = batch_item.version.content_type.model
+            object_id = batch_item.version.object_id
+            deletions.append((app_label, model_label, object_id))
+
+    batch_items_serialized = serializers.serialize('json', batch_objects)
+    dependencies_serialized = serializers.serialize('json', dependencies)
+    b_plaintext = pickle.dumps({'update': batch_items_serialized,
+                                'deletions' : json.dumps(deletions),
+                                'dependencies': dependencies_serialized})
+
     return encrypt_batch(key, b_plaintext)
 
 
@@ -77,7 +99,7 @@ def send_command(target, data):
         return urllib2.urlopen(req)
     except urllib2.HTTPError, e:
         raise CommandException(
-          'An exception occurred while contacting %s: %s' %
+            'An exception occurred while contacting %s: %s' %
             (url, e), e)
 
 

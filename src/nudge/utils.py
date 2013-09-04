@@ -1,5 +1,8 @@
 import hashlib
 import os
+
+from datetime import datetime
+
 from django.db.models.fields.related import (
     ReverseSingleRelatedObjectDescriptor, SingleRelatedObjectDescriptor,
     ForeignRelatedObjectsDescriptor)
@@ -127,7 +130,8 @@ def changed_items(for_date, batch=None):
         remote_details = remote_versions[pbi.key()]
         if remote_details:
             version_pk, version_type, timestamp = remote_details
-            if not(version_pk == pbi.version.pk):
+            remote_dt = datetime.strptime(timestamp,'%b %d, %Y, %I:%M %p')
+            if remote_dt < pbi.version.revision.date_created.replace(second=0):
                 pbi.remote_timestamp = timestamp
                 pbi.remote_change_type = VERSION_TYPE_LOOKUP[version_type]
                 screened_pbis.append(pbi)
